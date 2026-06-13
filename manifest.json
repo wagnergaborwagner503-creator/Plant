@@ -1,0 +1,21 @@
+{
+  "name": "Palánta – Növénynapló",
+  "short_name": "Palánta",
+  "description": "Növénygondozó napló – öntözés, tápoldat, átültetés és gondozás követése, helyi tárolással.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f1",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "productivity", "utilities"],
+  "lang": "hu",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
