@@ -14,6 +14,7 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 - **Naptár** — havi nézet az eseményekkel és a következő öntözések jelölésével.
 - **Statisztika** — gondozástípusok megoszlása, 12 hetes aktivitás, növényenkénti gondozásszám.
 - **Beállítások** — világos / sötét / rendszer téma, adat **exportálás és visszatöltés** (JSON mentés), tárhelyhasználat.
+- **🔔 Öntözési emlékeztetők** — értesítés egy nappal az öntözés előtt és aznap is, szerver nélkül (Androidon a háttérben is).
 - **PWA** — telepíthető a telefon kezdőképernyőjére, offline is működik.
 
 ---
@@ -38,6 +39,19 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 3. Ezután önálló alkalmazásként indul, böngészősáv nélkül.
 
 > **iPhone (Safari):** Megosztás ikon → „Add to Home Screen".
+
+---
+
+## 🔔 Öntözési emlékeztetők
+
+A **Beállítások → Értesítések → Bekapcsolás** gombbal kapcsolhatod be. Ezután:
+
+- **Egy nappal az öntözés előtt** és **az öntözés napján** is kapsz emlékeztetőt a szomjas növényekről.
+- **Androidon** (telepített appként) a háttérben is működik — a böngésző kb. naponta egyszer ellenőriz. ⚠️ A pontos időpontot a böngésző választja (nem fix óra), és csak telepített appnál + nettel megy.
+- **Minden eszközön:** amikor megnyitod az appot, rögtön ellenőrzi a mai és holnapi teendőket.
+- **iPhone:** háttér-értesítés szerver nélkül nem lehetséges — ott csak az app megnyitásakor szól.
+
+> Mindez **szerver nélkül**, helyben működik (a service worker az ütemezést IndexedDB-ből olvassa). Ha az értesítés „Letiltva", a böngésző címsorában a 🔒 ikonnál engedélyezheted újra.
 
 ---
 

@@ -562,7 +562,7 @@
     }
 
     /* ----- Tárolás ----- */
-    const defaultData = () => ({ plants: [], events: [], settings: { theme: 'system' }, version: 1 });
+    const defaultData = () => ({ plants: [], events: [], settings: { theme: 'system', notif: { enabled: false } }, version: 1 });
     function loadData() {
       try { const raw = localStorage.getItem(LS_KEY); if (raw) { const d = JSON.parse(raw); return { ...defaultData(), ...d, settings: { ...defaultData().settings, ...(d.settings || {}) } }; } }
       catch (e) {}
@@ -586,6 +586,51 @@
     }
     const waterInfo = (p, ev) => scheduleInfo(p, ev, 'water', p.waterIntervalDays);
     const fertInfo = (p, ev) => scheduleInfo(p, ev, 'fertilize', p.fertilizeIntervalDays);
+
+    /* ----- Értesítések (szerver nélkül) ----- */
+    // A SW nem éri el a localStorage-ot, ezért IndexedDB-be tükrözzük az ütemezést.
+    function idbOpen() {
+      return new Promise((res, rej) => {
+        const r = indexedDB.open('palanta-db', 1);
+        r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+    function idbGet(k) { return idbOpen().then(db => new Promise((res, rej) => { const q = db.transaction('kv', 'readonly').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); })); }
+    function idbSet(k, v) { return idbOpen().then(db => new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); })); }
+
+    function scheduleFromData(data) {
+      return data.plants.map(p => { const w = waterInfo(p, data.events); return w.due ? { plantId: p.id, name: p.name, due: w.due } : null; }).filter(Boolean);
+    }
+    // FONTOS: ugyanez a logika a sw.js-ben is megvan — tartsd szinkronban!
+    function buildReminders(schedule, today) {
+      const tomorrow = addDaysISO(today, 1);
+      const dueNow = schedule.filter(s => s.due && s.due <= today).map(s => s.name);
+      const dueTom = schedule.filter(s => s.due === tomorrow).map(s => s.name);
+      const rem = [];
+      if (dueNow.length) rem.push({ key: 'day:' + today, title: '💧 Öntözés ma', body: dueNow.length === 1 ? dueNow[0] + ' – ma esedékes az öntözés.' : dueNow.length + ' növény szomjas ma: ' + dueNow.join(', ') });
+      if (dueTom.length) rem.push({ key: 'pre:' + today, title: '🌱 Holnap öntözés', body: dueTom.length === 1 ? dueTom[0] + ' – holnap lesz esedékes.' : 'Holnap esedékes: ' + dueTom.join(', ') });
+      return rem;
+    }
+    async function fireReminders(schedule, today) {
+      if (!('Notification' in window) || Notification.permission !== 'granted' || !navigator.serviceWorker) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const log = (await idbGet('notifLog')) || {};
+        const rem = buildReminders(schedule, today).filter(r => !log[r.key]);
+        for (const r of rem) { await reg.showNotification(r.title, { body: r.body, tag: r.key, icon: './icon.svg', badge: './icon.svg', data: { url: './' } }); log[r.key] = Date.now(); }
+        const cut = addDaysISO(today, -3);
+        for (const k in log) { const dt = k.split(':')[1]; if (dt && dt < cut) delete log[k]; }
+        await idbSet('notifLog', log);
+      } catch (e) {}
+    }
+    async function registerPeriodicSync() {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if ('periodicSync' in reg) await reg.periodicSync.register('palanta-water-check', { minInterval: 12 * 60 * 60 * 1000 });
+      } catch (e) {}
+    }
 
     const STATE_META = {
       overdue: { color: 'var(--overdue)', label: 'Lemaradt' },
@@ -657,11 +702,36 @@
     function StoreProvider({ children }) {
       const [data, setData] = useState(loadData);
       const [toasts, setToasts] = useState([]);
+      const dataRef = useRef(data);
+      dataRef.current = data;
 
       useEffect(() => {
         try { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
         catch (e) { console.warn('Mentés sikertelen', e); }
+        // Ütemezés + beállítás tükrözése IndexedDB-be a háttér-értesítésekhez
+        try {
+          idbSet('schedule', scheduleFromData(data));
+          idbSet('config', { enabled: !!(data.settings.notif && data.settings.notif.enabled) });
+        } catch (e) {}
       }, [data]);
+
+      // Emlékeztetők ellenőrzése megnyitáskor és előtérbe kerüléskor
+      useEffect(() => {
+        if (!('Notification' in window) || !navigator.serviceWorker) return;
+        let dead = false;
+        const run = () => {
+          const d = dataRef.current;
+          if (Notification.permission !== 'granted' || !(d.settings.notif && d.settings.notif.enabled)) return;
+          const h = new Date().getHours();
+          if (h < 7 || h >= 23) return; // éjszaka ne pittyegjen
+          fireReminders(scheduleFromData(d), todayISO());
+          registerPeriodicSync();
+        };
+        navigator.serviceWorker.ready.then(() => { if (!dead) run(); });
+        const onVis = () => { if (document.visibilityState === 'visible') run(); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { dead = true; document.removeEventListener('visibilitychange', onVis); };
+      }, []);
 
       // feloldott téma
       const resolvedTheme = useMemo(() => {
@@ -698,6 +768,7 @@
         addEvent(ev) { const e = { id: uid(), date: todayISO(), createdAt: new Date().toISOString(), ...ev }; setData(d => ({ ...d, events: [...d.events, e] })); return e; },
         deleteEvent(id) { setData(d => ({ ...d, events: d.events.filter(e => e.id !== id) })); },
         setTheme(theme) { setData(d => ({ ...d, settings: { ...d.settings, theme } })); },
+        setNotif(patch) { setData(d => ({ ...d, settings: { ...d.settings, notif: { ...(d.settings.notif || {}), ...patch } } })); },
         importData(obj) { setData({ ...defaultData(), ...obj, settings: { ...defaultData().settings, ...(obj.settings || {}) } }); },
         resetData() { setData(defaultData()); },
         setAll(d) { setData(d); },
@@ -1282,10 +1353,33 @@
 
     /* ============================ BEÁLLÍTÁSOK ============================ */
     function SettingsView() {
-      const { data, setTheme, importData, resetData, toast } = useStore();
+      const { data, setTheme, setNotif, importData, resetData, toast } = useStore();
       const fileRef = useRef(null);
       const [confirmReset, setConfirmReset] = useState(false);
       const [installEvt, setInstallEvt] = useState(window.__deferredInstall || null);
+      const [perm, setPerm] = useState(('Notification' in window) ? Notification.permission : 'unsupported');
+      const notifEnabled = perm === 'granted' && !!(data.settings.notif && data.settings.notif.enabled);
+
+      const enableNotif = async () => {
+        if (!('Notification' in window)) { toast('Nem támogatott böngésző', '⚠️'); return; }
+        let p = Notification.permission;
+        if (p === 'default') p = await Notification.requestPermission();
+        setPerm(p);
+        if (p !== 'granted') { toast('Értesítés nem engedélyezve', '🔕'); return; }
+        setNotif({ enabled: true });
+        await registerPeriodicSync();
+        await fireReminders(scheduleFromData(data), todayISO());
+        toast('Értesítések bekapcsolva', '🔔');
+      };
+      const disableNotif = async () => {
+        setNotif({ enabled: false });
+        try { const reg = await navigator.serviceWorker.ready; if (reg.periodicSync) await reg.periodicSync.unregister('palanta-water-check'); } catch (e) {}
+        toast('Értesítések kikapcsolva', '🔕');
+      };
+      const testNotif = async () => {
+        try { const reg = await navigator.serviceWorker.ready; await reg.showNotification('Palánta 🌱', { body: 'Így néz ki egy öntözési emlékeztető. 💧', icon: './icon.svg', badge: './icon.svg' }); toast('Teszt elküldve', '🔔'); }
+        catch (e) { toast('Nem sikerült elküldeni', '⚠️'); }
+      };
 
       useEffect(() => {
         const fn = e => { e.preventDefault(); window.__deferredInstall = e; setInstallEvt(e); };
@@ -1326,6 +1420,34 @@
               ))}
             </div>
           </div>
+
+          <div className="sec-title" style={{ marginBottom: 11 }}>Értesítések</div>
+          <div className="card" style={{ marginBottom: 14 }}>
+            <div className="set-row">
+              <div className="set-ic" style={{ color: 'var(--water)' }}><Icon name="bell" size={20} /></div>
+              <div className="set-main">
+                <div className="set-title">Öntözési emlékeztetők</div>
+                <div className="set-sub">Egy nappal előtte és aznap is szól</div>
+              </div>
+              {perm === 'unsupported'
+                ? <span className="muted-3" style={{ fontSize: 12.5, fontWeight: 700 }}>Nem támogatott</span>
+                : perm === 'denied'
+                  ? <span className="pill" style={{ color: 'var(--overdue)', background: tint('#e5484d', .12) }}>Letiltva</span>
+                  : perm === 'granted'
+                    ? <button className={cls('switch', notifEnabled && 'on')} onClick={() => (notifEnabled ? disableNotif() : enableNotif())} aria-label="Értesítések kapcsolása" />
+                    : <button className="btn btn-soft btn-sm" onClick={enableNotif}>Bekapcsolás</button>}
+            </div>
+            {perm === 'granted' && notifEnabled && (
+              <div className="set-row">
+                <div className="set-ic"><Icon name="sparkles" size={19} className="muted" /></div>
+                <div className="set-main"><div className="set-title">Teszt értesítés</div><div className="set-sub">Nézd meg, hogy néz ki</div></div>
+                <button className="btn btn-ghost btn-sm" onClick={testNotif}>Küldés</button>
+              </div>
+            )}
+          </div>
+          {perm === 'denied'
+            ? <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 22, padding: '0 4px' }}>Az értesítések le vannak tiltva ehhez az oldalhoz. Engedélyezd a címsor 🔒 ikonjánál (Webhely beállításai → Értesítések), majd térj vissza ide.</div>
+            : <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 22, padding: '0 4px' }}>📱 Androidon, telepített appként a háttérben is emlékeztet (kb. naponta egyszer — a böngésző választja az időpontot). Az appot megnyitva mindig ellenőrzi a mai és holnapi teendőket. iPhone-on csak megnyitáskor szól.</div>}
 
           <div className="sec-title" style={{ marginBottom: 11 }}>Adatok</div>
           <div className="card" style={{ marginBottom: 14 }}>
