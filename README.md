@@ -10,10 +10,11 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 
 - **Kezdőképernyő** — ma esedékes öntözések, „mind megöntözése" gomb, hamarosan esedékes növények, legutóbbi gondozások.
 - **Növények** — kártyás nézet fotóval, állapotjelzővel (lemaradt / ma / hamarosan / rendben), kereséssel és szűréssel.
-- **Növény részletek** — gyors rögzítés 9-féle eseménytípussal (öntözés, tápoldat, átültetés, metszés, permetezés, kártevő, forgatás, levéltisztítás, megfigyelés), teljes napló idővonal és öntözési grafikon.
+- **🌿 Növénytár (95+ faj) + okos gondozási tippek** — új növénynél kiválaszthatod a faját (szobanövény, pozsgás, fűszer, zöldség, gyümölcs, virág, páfrány, pálma), és az app automatikusan beállítja a gondozást (fény, öntözés, tápoldat, átültetés), majd személyre szabott útmutatót ad: mit, mivel és mikor csinálj. A **Beállítások → Otthonom és felszerelésem** (szoba, erkély, üvegház, cserép, metszőolló, tápoldat, növénylámpa…) alapján a tippek a te lehetőségeidre szabottak.
+- **Növény részletek** — gyors rögzítés 9-féle eseménytípussal (öntözés, tápoldat, átültetés, metszés, permetezés, kártevő, forgatás, levéltisztítás, megfigyelés), gondozási útmutató, teljes napló idővonal és öntözési grafikon. A napló bejegyzéseire koppintva **átírhatod a dátumot** – az app innen számolja a következő öntözést.
 - **Naptár** — havi nézet az eseményekkel és a következő öntözések jelölésével.
 - **Statisztika** — gondozástípusok megoszlása, 12 hetes aktivitás, növényenkénti gondozásszám.
-- **Beállítások** — világos / sötét / rendszer téma, adat **exportálás és visszatöltés** (JSON mentés), tárhelyhasználat.
+- **Beállítások** — világos / sötét / rendszer téma, **otthonod és felszerelésed** megadása (a tippekhez), adat **exportálás és visszatöltés** (JSON mentés), tárhelyhasználat.
 - **🔔 Öntözési emlékeztetők** — értesítés egy nappal az öntözés előtt és aznap is, szerver nélkül (Androidon a háttérben is).
 - **PWA** — telepíthető a telefon kezdőképernyőjére, offline is működik.
 

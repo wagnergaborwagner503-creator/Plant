@@ -329,6 +329,29 @@
     .photo-pick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .photo-clear { position: absolute; top: 9px; right: 9px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
 
+    /* Növénytár választó */
+    .sp-list { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden auto; max-height: 290px; background: var(--surface-2); }
+    .sp-row { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; padding: 10px 13px; transition: background .12s; }
+    .sp-row + .sp-row { border-top: 1px solid var(--border); }
+    .sp-row:hover { background: var(--surface-3); }
+    .sp-row:active { background: var(--primary-soft); }
+    .sp-emoji { font-size: 21px; flex-shrink: 0; width: 28px; text-align: center; }
+    .sp-selected { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--primary); background: var(--primary-soft); border-radius: var(--r-sm); }
+
+    /* Gondozási útmutató */
+    .care-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); padding: 15px 16px; }
+    .tip { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+    .tip + .tip { margin-top: 10px; }
+    .tip .te { font-size: 15px; flex-shrink: 0; line-height: 1.4; }
+    .fact { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: var(--pill); font-size: 12px; font-weight: 700; }
+
+    /* Felszerelés chipek */
+    .kit-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kit-chip { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border-radius: var(--pill); border: 1.5px solid var(--border); background: var(--surface-2); font-size: 13px; font-weight: 600; color: var(--text-2); transition: transform .12s, border-color .14s, background .14s, color .14s; }
+    .kit-chip.on { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-700); }
+    [data-theme="dark"] .kit-chip.on { color: var(--primary); }
+    .kit-chip:active { transform: scale(.94); }
+
     /* Bottom nav */
     .bottomnav {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
@@ -506,6 +529,169 @@
     const WATER_PRESETS = [2, 3, 4, 5, 7, 10, 14, 21, 30];
     const FERT_PRESETS = [0, 14, 21, 30, 45, 60, 90];
 
+    /* ============================ NÖVÉNYTÁR ============================ */
+    const PLANT_CATS = {
+      house: { label: 'Szobanövény', emoji: '🪴' },
+      succ: { label: 'Pozsgás / kaktusz', emoji: '🌵' },
+      fern: { label: 'Páfrány', emoji: '🌿' },
+      palm: { label: 'Pálma', emoji: '🌴' },
+      herb: { label: 'Fűszernövény', emoji: '🌿' },
+      veg: { label: 'Zöldség', emoji: '🍅' },
+      fruit: { label: 'Gyümölcs', emoji: '🍓' },
+      flower: { label: 'Virág', emoji: '🌸' },
+    };
+    const DIFF = { easy: { l: 'Könnyű', c: '#16a34a' }, med: { l: 'Közepes', c: '#d9a313' }, hard: { l: 'Igényes', c: '#e5484d' } };
+    const HUM = { low: 'Alacsony', med: 'Közepes', high: 'Magas' };
+
+    // mezők: k, n(név), lat(latin), c(kategória), light, w(öntözés nap), f(tápoldat nap,0=nincs),
+    // r(átültetés hónap,0=ritkán), hum, temp[min,max], tox(1=mérgező), diff, prune(0/1/2), tip
+    const PLANT_DB = [
+      // — Szobanövények —
+      { k: 'monstera', n: 'Monstera', lat: 'Monstera deliciosa', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Mohaoszlopot/karót szeret; töröld le a leveleit a portól.' },
+      { k: 'monstera_adansonii', n: 'Lyuklevél monstera', lat: 'Monstera adansonii', c: 'house', light: 'bright', w: 7, f: 30, r: 18, hum: 'high', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Kapaszkodik; magasabb párát kedvel.' },
+      { k: 'pothos', n: 'Aranyinda', lat: 'Epipremnum aureum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'low', temp: [16, 26], tox: 1, diff: 'easy', prune: 1, tip: 'Szinte elpusztíthatatlan; vízben is gyökereztethető.' },
+      { k: 'philodendron', n: 'Filodendron', lat: 'Philodendron hederaceum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Gyors növekedő, hálás szobanövény.' },
+      { k: 'sansevieria', n: 'Anyósnyelv', lat: 'Sansevieria trifasciata', c: 'house', light: 'low', w: 14, f: 45, r: 36, hum: 'low', temp: [15, 29], tox: 1, diff: 'easy', prune: 0, tip: 'Ritkán öntözd, télen alig; túlöntözésre rohad.' },
+      { k: 'zz', n: 'ZZ-növény', lat: 'Zamioculcas zamiifolia', c: 'house', light: 'low', w: 14, f: 60, r: 24, hum: 'low', temp: [16, 26], tox: 1, diff: 'easy', prune: 0, tip: 'Tűri az árnyékot és a szárazságot.' },
+      { k: 'ficus_elastica', n: 'Gumifa', lat: 'Ficus elastica', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [16, 28], tox: 1, diff: 'easy', prune: 1, tip: 'Töröld a leveleit; nem szereti a huzatot.' },
+      { k: 'ficus_lyrata', n: 'Hárfafikusz', lat: 'Ficus lyrata', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'med', prune: 1, tip: 'Utálja a helyváltoztatást és a huzatot.' },
+      { k: 'ficus_benjamina', n: 'Benjámin fikusz', lat: 'Ficus benjamina', c: 'house', light: 'bright', w: 6, f: 30, r: 24, hum: 'med', temp: [16, 26], tox: 1, diff: 'med', prune: 1, tip: 'Stresszre lombhullással reagál – türelem.' },
+      { k: 'dracaena', n: 'Sárkányfa', lat: 'Dracaena marginata', c: 'house', light: 'medium', w: 10, f: 45, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Fluoridra érzékeny; állott vagy esővizet adj.' },
+      { k: 'spathiphyllum', n: 'Vitorlavirág', lat: 'Spathiphyllum wallisii', c: 'house', light: 'medium', w: 5, f: 30, r: 18, hum: 'high', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Lekonyul, ha szomjas – jó jelzőnövény.' },
+      { k: 'chlorophytum', n: 'Zöldike', lat: 'Chlorophytum comosum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [15, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Indákat nevel; könnyű szaporítani.' },
+      { k: 'aglaonema', n: 'Aglaonéma', lat: 'Aglaonema commutatum', c: 'house', light: 'medium', w: 8, f: 45, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 0, tip: 'Színes levelek; melegkedvelő.' },
+      { k: 'dieffenbachia', n: 'Díszlevél', lat: 'Dieffenbachia', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Nedve irritáló – kesztyűvel metszd.' },
+      { k: 'calathea', n: 'Kalatea', lat: 'Calathea / Goeppertia', c: 'house', light: 'medium', w: 5, f: 45, r: 18, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Magas párát és állott/esővizet igényel.' },
+      { k: 'maranta', n: 'Imádkozó növény', lat: 'Maranta leuconeura', c: 'house', light: 'medium', w: 5, f: 45, r: 18, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Este felcsukja a leveleit.' },
+      { k: 'anthurium', n: 'Flamingóvirág', lat: 'Anthurium andraeanum', c: 'house', light: 'bright', w: 6, f: 30, r: 18, hum: 'high', temp: [18, 28], tox: 1, diff: 'med', prune: 0, tip: 'Magas pára kell a folyamatos virágzáshoz.' },
+      { k: 'hedera', n: 'Borostyán', lat: 'Hedera helix', c: 'house', light: 'medium', w: 7, f: 45, r: 18, hum: 'med', temp: [10, 22], tox: 1, diff: 'easy', prune: 1, tip: 'Hűvösebb helyet kedvel; permetezhető.' },
+      { k: 'tradescantia', n: 'Pletyka', lat: 'Tradescantia zebrina', c: 'house', light: 'bright', w: 6, f: 30, r: 12, hum: 'med', temp: [15, 26], tox: 1, diff: 'easy', prune: 1, tip: 'Csípd vissza a dúsabb forma érdekében.' },
+      { k: 'peperomia', n: 'Peperómia', lat: 'Peperomia', c: 'house', light: 'medium', w: 9, f: 45, r: 24, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Pozsgás levelek – ritkábban öntözd.' },
+      { k: 'pilea', n: 'Békalevél', lat: 'Pilea peperomioides', c: 'house', light: 'bright', w: 7, f: 30, r: 18, hum: 'low', temp: [15, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Forgasd a fény felé az egyenletes formáért.' },
+      { k: 'schefflera', n: 'Sugáraralia', lat: 'Schefflera arboricola', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [16, 24], tox: 1, diff: 'easy', prune: 1, tip: 'Metszéssel szépen sűríthető.' },
+      { k: 'yucca', n: 'Jukka', lat: 'Yucca elephantipes', c: 'house', light: 'direct', w: 12, f: 45, r: 36, hum: 'low', temp: [12, 27], tox: 1, diff: 'easy', prune: 0, tip: 'Sok fény, kevés víz.' },
+      { k: 'croton', n: 'Kroton', lat: 'Codiaeum variegatum', c: 'house', light: 'bright', w: 6, f: 30, r: 18, hum: 'high', temp: [18, 27], tox: 1, diff: 'med', prune: 0, tip: 'Erős fény kell az élénk színekhez.' },
+      { k: 'syngonium', n: 'Nyíllevél', lat: 'Syngonium podophyllum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Kapaszkodó vagy függő is lehet.' },
+      { k: 'hoya', n: 'Viaszvirág', lat: 'Hoya carnosa', c: 'house', light: 'bright', w: 10, f: 45, r: 36, hum: 'med', temp: [16, 27], tox: 0, diff: 'easy', prune: 0, tip: 'Virágzáskor ne mozgasd; ritkán ültesd át.' },
+      { k: 'fittonia', n: 'Mozaiknövény', lat: 'Fittonia albivenis', c: 'house', light: 'medium', w: 4, f: 45, r: 12, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Szárazon azonnal lekókad; pára kell.' },
+      { k: 'begonia_rex', n: 'Levélbegónia', lat: 'Begonia rex', c: 'house', light: 'medium', w: 6, f: 30, r: 18, hum: 'high', temp: [16, 24], tox: 1, diff: 'med', prune: 0, tip: 'A tövét öntözd, a leveleit ne permetezd.' },
+      { k: 'strelitzia', n: 'Papagájvirág', lat: 'Strelitzia reginae', c: 'house', light: 'direct', w: 8, f: 30, r: 24, hum: 'med', temp: [16, 28], tox: 1, diff: 'med', prune: 0, tip: 'Sok fény kell, hogy virágozzon.' },
+      { k: 'beaucarnea', n: 'Elefántláb', lat: 'Beaucarnea recurvata', c: 'house', light: 'bright', w: 16, f: 60, r: 36, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 0, tip: 'Törzsében tárolja a vizet – ritkán öntözd.' },
+      { k: 'cissus', n: 'Szobai szőlő', lat: 'Cissus rhombifolia', c: 'house', light: 'medium', w: 7, f: 45, r: 18, hum: 'med', temp: [15, 25], tox: 0, diff: 'easy', prune: 1, tip: 'Gyors kúszó; rendszeresen metszhető.' },
+      // — Páfrányok —
+      { k: 'nephrolepis', n: 'Kardpáfrány', lat: 'Nephrolepis exaltata', c: 'fern', light: 'medium', w: 4, f: 45, r: 18, hum: 'high', temp: [16, 24], tox: 0, diff: 'med', prune: 0, tip: 'Folyamatosan nyirkos föld + magas pára.' },
+      { k: 'adiantum', n: 'Vénuszhaj páfrány', lat: 'Adiantum', c: 'fern', light: 'medium', w: 3, f: 45, r: 18, hum: 'high', temp: [16, 23], tox: 0, diff: 'hard', prune: 0, tip: 'Soha ne száradjon ki; nagyon párás hely kell.' },
+      { k: 'asplenium', n: 'Fészekpáfrány', lat: 'Asplenium nidus', c: 'fern', light: 'medium', w: 6, f: 45, r: 24, hum: 'high', temp: [18, 26], tox: 0, diff: 'easy', prune: 0, tip: 'A tölcsér közepébe ne önts vizet.' },
+      { k: 'platycerium', n: 'Szarvaspáfrány', lat: 'Platycerium bifurcatum', c: 'fern', light: 'bright', w: 7, f: 45, r: 24, hum: 'high', temp: [16, 26], tox: 0, diff: 'med', prune: 0, tip: 'Epifita – áztatásos öntözés ajánlott.' },
+      // — Pozsgások / kaktuszok —
+      { k: 'echeveria', n: 'Echeveria', lat: 'Echeveria', c: 'succ', light: 'direct', w: 12, f: 60, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'easy', prune: 0, tip: 'A tövét öntözd, a rózsát ne; sok fény.' },
+      { k: 'crassula', n: 'Pénzfa', lat: 'Crassula ovata', c: 'succ', light: 'direct', w: 14, f: 60, r: 36, hum: 'low', temp: [10, 24], tox: 1, diff: 'easy', prune: 1, tip: 'Jól száradjon ki két öntözés közt; télen pihen.' },
+      { k: 'haworthia', n: 'Haworthia', lat: 'Haworthia', c: 'succ', light: 'bright', w: 12, f: 60, r: 24, hum: 'low', temp: [12, 27], tox: 0, diff: 'easy', prune: 0, tip: 'Tűri a kevesebb fényt is.' },
+      { k: 'aloe', n: 'Aloe vera', lat: 'Aloe vera', c: 'succ', light: 'direct', w: 14, f: 60, r: 24, hum: 'low', temp: [13, 27], tox: 0, diff: 'easy', prune: 0, tip: 'Gyógyító gél a levélben; ritka öntözés.' },
+      { k: 'sempervivum', n: 'Kövirózsa', lat: 'Sempervivum', c: 'succ', light: 'direct', w: 12, f: 0, r: 36, hum: 'low', temp: [-20, 30], tox: 0, diff: 'easy', prune: 0, tip: 'Fagytűrő – kültéren, sziklakertben is.' },
+      { k: 'kalanchoe', n: 'Kalanchoe', lat: 'Kalanchoe blossfeldiana', c: 'succ', light: 'bright', w: 10, f: 45, r: 18, hum: 'low', temp: [12, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Virágzás után metszd vissza.' },
+      { k: 'schlumbergera', n: 'Karácsonyi kaktusz', lat: 'Schlumbergera', c: 'succ', light: 'bright', w: 8, f: 45, r: 36, hum: 'med', temp: [15, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Ősszel hűvös, sötét éjszakák hozzák a bimbót.' },
+      { k: 'mammillaria', n: 'Gombkaktusz', lat: 'Mammillaria', c: 'succ', light: 'direct', w: 16, f: 60, r: 36, hum: 'low', temp: [10, 30], tox: 0, diff: 'easy', prune: 0, tip: 'Télen szinte száraz, hűvös pihenő.' },
+      { k: 'opuntia', n: 'Fügekaktusz', lat: 'Opuntia', c: 'succ', light: 'direct', w: 16, f: 60, r: 36, hum: 'low', temp: [5, 30], tox: 0, diff: 'easy', prune: 0, tip: 'Apró tüskék (glochidák) – óvatosan fogd meg.' },
+      { k: 'lithops', n: 'Élőkő', lat: 'Lithops', c: 'succ', light: 'direct', w: 21, f: 0, r: 36, hum: 'low', temp: [10, 28], tox: 0, diff: 'hard', prune: 0, tip: 'Pihenőben (nyár/tél) egyáltalán ne öntözd.' },
+      { k: 'senecio', n: 'Gyöngyfüzér', lat: 'Senecio rowleyanus', c: 'succ', light: 'bright', w: 10, f: 60, r: 24, hum: 'low', temp: [13, 26], tox: 1, diff: 'med', prune: 0, tip: 'Függő pozsgás; sekély gyökérzet.' },
+      { k: 'euphorbia_trigona', n: 'Kaktuszkutyatej', lat: 'Euphorbia trigona', c: 'succ', light: 'direct', w: 14, f: 60, r: 36, hum: 'low', temp: [13, 29], tox: 1, diff: 'easy', prune: 0, tip: 'Tejnedve irritáló – kesztyűvel dolgozz.' },
+      // — Pálmák —
+      { k: 'areca', n: 'Areca pálma', lat: 'Dypsis lutescens', c: 'palm', light: 'bright', w: 6, f: 30, r: 24, hum: 'high', temp: [18, 27], tox: 0, diff: 'med', prune: 0, tip: 'Magas pára; ne száradjon ki teljesen.' },
+      { k: 'kentia', n: 'Kentia pálma', lat: 'Howea forsteriana', c: 'palm', light: 'medium', w: 8, f: 45, r: 36, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Tűri a kevesebb fényt; lassan nő.' },
+      { k: 'chamaedorea', n: 'Hegyipálma', lat: 'Chamaedorea elegans', c: 'palm', light: 'medium', w: 7, f: 45, r: 24, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Kompakt, jó választás kezdőknek.' },
+      // — Fűszernövények —
+      { k: 'basil', n: 'Bazsalikom', lat: 'Ocimum basilicum', c: 'herb', light: 'direct', w: 2, f: 21, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'easy', prune: 1, tip: 'Csípd a tetejét a dús bokrosodásért; sok fény + víz.' },
+      { k: 'parsley', n: 'Petrezselyem', lat: 'Petroselinum crispum', c: 'herb', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [10, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Kívülről befelé szedd a szárakat.' },
+      { k: 'rosemary', n: 'Rozmaring', lat: 'Salvia rosmarinus', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'med', prune: 1, tip: 'Mediterrán – ne öntözd túl.' },
+      { k: 'thyme', n: 'Kakukkfű', lat: 'Thymus vulgaris', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'easy', prune: 1, tip: 'Száraz, napos helyet szeret.' },
+      { k: 'oregano', n: 'Oregánó', lat: 'Origanum vulgare', c: 'herb', light: 'direct', w: 5, f: 45, r: 24, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Virágzás előtt a legaromásabb.' },
+      { k: 'mint', n: 'Menta', lat: 'Mentha', c: 'herb', light: 'bright', w: 2, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Terjeszkedő – tartsd külön cserépben!' },
+      { k: 'chives', n: 'Snidling', lat: 'Allium schoenoprasum', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [10, 25], tox: 0, diff: 'easy', prune: 0, tip: 'Ollóval vágd vissza, újrahajt.' },
+      { k: 'cilantro', n: 'Koriander', lat: 'Coriandrum sativum', c: 'herb', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [12, 24], tox: 0, diff: 'med', prune: 0, tip: 'Hőségben gyorsan magszárba szökik.' },
+      { k: 'sage', n: 'Zsálya', lat: 'Salvia officinalis', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Száraz, napos hely; jó vízelvezetés.' },
+      { k: 'dill', n: 'Kapor', lat: 'Anethum graveolens', c: 'herb', light: 'direct', w: 3, f: 30, r: 0, hum: 'low', temp: [12, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Mély cserép kell a karógyökérnek.' },
+      { k: 'lemonbalm', n: 'Citromfű', lat: 'Melissa officinalis', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Citromos illat; teának is kiváló.' },
+      { k: 'lavender', n: 'Levendula', lat: 'Lavandula', c: 'herb', light: 'direct', w: 7, f: 45, r: 24, hum: 'low', temp: [5, 30], tox: 0, diff: 'med', prune: 1, tip: 'Napos, jó vízelvezetésű talaj; virágzás után metszd.' },
+      // — Zöldségek —
+      { k: 'tomato', n: 'Paradicsom', lat: 'Solanum lycopersicum', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [15, 30], tox: 0, diff: 'med', prune: 1, tip: 'Kacsozd; karó/kalitka kell; egyenletesen öntözd.' },
+      { k: 'pepper', n: 'Paprika', lat: 'Capsicum annuum', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'med', prune: 0, tip: 'Melegigényes, sok közvetlen napfény.' },
+      { k: 'chili', n: 'Chili', lat: 'Capsicum', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [18, 32], tox: 0, diff: 'med', prune: 0, tip: 'Minél melegebb, annál csípősebb.' },
+      { k: 'cucumber', n: 'Uborka', lat: 'Cucumis sativus', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'high', temp: [18, 30], tox: 0, diff: 'med', prune: 1, tip: 'Sok víz és tápanyag; felfuttatható.' },
+      { k: 'lettuce', n: 'Saláta', lat: 'Lactuca sativa', c: 'veg', light: 'bright', w: 2, f: 30, r: 0, hum: 'med', temp: [10, 22], tox: 0, diff: 'easy', prune: 0, tip: 'Hűvöskedvelő, gyorsan terem.' },
+      { k: 'radish', n: 'Retek', lat: 'Raphanus sativus', c: 'veg', light: 'bright', w: 3, f: 0, r: 0, hum: 'med', temp: [10, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Nagyon gyors – 3–4 hét alatt kész.' },
+      { k: 'carrot', n: 'Sárgarépa', lat: 'Daucus carota', c: 'veg', light: 'direct', w: 4, f: 30, r: 0, hum: 'low', temp: [10, 25], tox: 0, diff: 'easy', prune: 0, tip: 'Mély, laza, kőmentes talaj kell.' },
+      { k: 'zucchini', n: 'Cukkini', lat: 'Cucurbita pepo', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [16, 30], tox: 0, diff: 'easy', prune: 0, tip: 'Sok helyet és vizet kér.' },
+      { k: 'eggplant', n: 'Padlizsán', lat: 'Solanum melongena', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [20, 32], tox: 0, diff: 'med', prune: 0, tip: 'Nagyon melegigényes.' },
+      { k: 'spinach', n: 'Spenót', lat: 'Spinacia oleracea', c: 'veg', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [8, 22], tox: 0, diff: 'easy', prune: 0, tip: 'Tavaszi/őszi; melegben magba szökik.' },
+      { k: 'beans', n: 'Bab', lat: 'Phaseolus vulgaris', c: 'veg', light: 'direct', w: 3, f: 30, r: 0, hum: 'med', temp: [15, 28], tox: 0, diff: 'easy', prune: 0, tip: 'Karós fajtához adj támaszt.' },
+      { k: 'onion', n: 'Vöröshagyma', lat: 'Allium cepa', c: 'veg', light: 'bright', w: 4, f: 30, r: 0, hum: 'low', temp: [10, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Sok nap kell a fejképzéshez.' },
+      { k: 'garlic', n: 'Fokhagyma', lat: 'Allium sativum', c: 'veg', light: 'bright', w: 5, f: 30, r: 0, hum: 'low', temp: [5, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Ősszel ültetve nyárra érik be.' },
+      // — Gyümölcsök —
+      { k: 'strawberry', n: 'Eper', lat: 'Fragaria', c: 'fruit', light: 'direct', w: 3, f: 21, r: 0, hum: 'med', temp: [12, 27], tox: 0, diff: 'easy', prune: 1, tip: 'Indákat nevel; cserépben/ládában is jól terem.' },
+      { k: 'lemon', n: 'Citrom', lat: 'Citrus limon', c: 'fruit', light: 'direct', w: 5, f: 21, r: 36, hum: 'med', temp: [12, 30], tox: 0, diff: 'med', prune: 1, tip: 'Télen fagymentes, fényes hely; ne álljon vízben.' },
+      { k: 'blueberry', n: 'Áfonya', lat: 'Vaccinium', c: 'fruit', light: 'bright', w: 3, f: 30, r: 36, hum: 'med', temp: [5, 26], tox: 0, diff: 'med', prune: 1, tip: 'Savanyú (tőzeges) talajt igényel.' },
+      { k: 'raspberry', n: 'Málna', lat: 'Rubus idaeus', c: 'fruit', light: 'direct', w: 4, f: 30, r: 0, hum: 'med', temp: [5, 26], tox: 0, diff: 'med', prune: 2, tip: 'Termés után a régi vesszőt tőből vágd ki.' },
+      { k: 'grape', n: 'Szőlő', lat: 'Vitis vinifera', c: 'fruit', light: 'direct', w: 7, f: 30, r: 0, hum: 'low', temp: [10, 32], tox: 0, diff: 'med', prune: 2, tip: 'A téli metszés elengedhetetlen a terméshez.' },
+      { k: 'fig', n: 'Füge', lat: 'Ficus carica', c: 'fruit', light: 'direct', w: 5, f: 30, r: 36, hum: 'low', temp: [8, 32], tox: 0, diff: 'med', prune: 1, tip: 'Napos, védett hely; télen pihenteted.' },
+      // — Virágok —
+      { k: 'orchid', n: 'Orchidea (Phalaenopsis)', lat: 'Phalaenopsis', c: 'flower', light: 'bright', w: 7, f: 14, r: 24, hum: 'high', temp: [18, 28], tox: 0, diff: 'med', prune: 0, tip: 'Áztatásos öntözés; átlátszó cserép a gyökérnek.' },
+      { k: 'geranium', n: 'Muskátli', lat: 'Pelargonium', c: 'flower', light: 'direct', w: 3, f: 14, r: 12, hum: 'low', temp: [10, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Sok virág sok fénynél; szárazságtűrő.' },
+      { k: 'petunia', n: 'Petúnia', lat: 'Petunia', c: 'flower', light: 'direct', w: 2, f: 14, r: 0, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Az elnyílt virágokat csipkedd le.' },
+      { k: 'cyclamen', n: 'Ciklámen', lat: 'Cyclamen persicum', c: 'flower', light: 'bright', w: 5, f: 21, r: 12, hum: 'med', temp: [10, 18], tox: 1, diff: 'med', prune: 0, tip: 'Hűvöskedvelő; alulról öntözd, a gumót ne.' },
+      { k: 'poinsettia', n: 'Mikulásvirág', lat: 'Euphorbia pulcherrima', c: 'flower', light: 'bright', w: 6, f: 30, r: 0, hum: 'med', temp: [15, 24], tox: 1, diff: 'med', prune: 0, tip: 'Huzatra és hidegre érzékeny.' },
+      { k: 'rose', n: 'Rózsa', lat: 'Rosa', c: 'flower', light: 'direct', w: 3, f: 21, r: 0, hum: 'low', temp: [10, 30], tox: 0, diff: 'med', prune: 2, tip: 'Tavaszi metszés; tőhöz öntözz, ne a levélre.' },
+      { k: 'chrysanthemum', n: 'Krizantém', lat: 'Chrysanthemum', c: 'flower', light: 'direct', w: 3, f: 21, r: 0, hum: 'low', temp: [10, 24], tox: 0, diff: 'easy', prune: 1, tip: 'Őszi virágzó; virágzás után visszametszhető.' },
+      { k: 'hydrangea', n: 'Hortenzia', lat: 'Hydrangea', c: 'flower', light: 'bright', w: 2, f: 21, r: 0, hum: 'med', temp: [8, 24], tox: 1, diff: 'med', prune: 1, tip: 'Sok vizet kíván; a talaj pH-ja színt befolyásol.' },
+      { k: 'gerbera', n: 'Gerbera', lat: 'Gerbera jamesonii', c: 'flower', light: 'bright', w: 4, f: 21, r: 12, hum: 'low', temp: [12, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Alulról öntözd, a tövét ne áztasd.' },
+      { k: 'tulip', n: 'Tulipán', lat: 'Tulipa', c: 'flower', light: 'bright', w: 4, f: 30, r: 0, hum: 'low', temp: [5, 20], tox: 1, diff: 'easy', prune: 0, tip: 'Hagyma; virágzás után hagyd visszahúzódni a lombot.' },
+    ];
+    const SP_BY_KEY = Object.fromEntries(PLANT_DB.map(s => [s.k, s]));
+
+    const KIT_PLACES = [
+      { key: 'room', label: 'Szoba', emoji: '🛋️' },
+      { key: 'windowsill', label: 'Ablakpárkány', emoji: '🪟' },
+      { key: 'balcony', label: 'Erkély', emoji: '🌇' },
+      { key: 'outdoor', label: 'Kerti ágyás', emoji: '🌳' },
+      { key: 'greenhouse', label: 'Üvegház', emoji: '🏡' },
+    ];
+    const KIT_TOOLS = [
+      { key: 'pots', label: 'Cserepek', emoji: '🪴' },
+      { key: 'planters', label: 'Kaspók', emoji: '🏺' },
+      { key: 'pruner', label: 'Metszőolló', emoji: '✂️' },
+      { key: 'fertilizer', label: 'Tápoldat', emoji: '🌿' },
+      { key: 'sprayer', label: 'Permetező', emoji: '💦' },
+      { key: 'humidifier', label: 'Párásító', emoji: '💨' },
+      { key: 'growlight', label: 'Növénylámpa', emoji: '💡' },
+      { key: 'moistureMeter', label: 'Nedvességmérő', emoji: '📏' },
+    ];
+    const hasAnyKit = kit => !!kit && (Object.values(kit.places || {}).some(Boolean) || Object.values(kit.tools || {}).some(Boolean));
+
+    function repotText(r) { if (!r) return null; if (r % 12 === 0) { const y = r / 12; return y === 1 ? 'évente' : y + ' évente'; } return r + ' havonta'; }
+
+    // Faj + a felhasználó felszerelése alapján személyre szabott tippek
+    function careAdvice(sp, kit) {
+      kit = kit || {}; const tools = kit.tools || {}; const places = kit.places || {};
+      const tips = [];
+      let lt = 'Fény: ' + LIGHT[sp.light].label.toLowerCase() + '.';
+      if (sp.light === 'bright' || sp.light === 'direct') lt += tools.growlight ? ' Sötétebb helyen a növénylámpád segít.' : ' Ha nincs elég természetes fény, növénylámpa ajánlott.';
+      tips.push({ e: '☀️', t: lt });
+      tips.push({ e: '💧', t: 'Öntözés kb. ' + sp.w + ' naponta a növekedési időszakban, télen ritkábban. ' + (tools.moistureMeter ? 'Ellenőrizd a nedvességmérőddel.' : 'A felső 2–3 cm száradjon meg két öntözés között.') });
+      if (sp.f > 0) tips.push({ e: '🌿', t: (tools.fertilizer ? 'Tápoldat ' : 'Tápoldatozás ajánlott ') + sp.f + ' naponta tavasztól őszig' + (tools.fertilizer ? '.' : ' – érdemes tápoldatot beszerezned.') });
+      else tips.push({ e: '🌿', t: 'Külön tápoldatozást nemigen igényel.' });
+      if (sp.hum === 'high') tips.push({ e: '💨', t: 'Magas párát szeret – ' + (tools.humidifier ? 'a párásítód ideális hozzá.' : (tools.sprayer ? 'permetezd rendszeresen.' : 'permetező vagy párásító ajánlott.')) });
+      if (sp.r > 0) tips.push({ e: '🪴', t: 'Átültetés kb. ' + repotText(sp.r) + ', amikor kinövi a cserepét' + ((tools.pots || tools.planters) ? '.' : ' – ehhez nagyobb cserépre lesz szükséged.') });
+      if (sp.prune >= 1) tips.push({ e: '✂️', t: (sp.prune === 2 ? 'Rendszeres metszést igényel. ' : 'Időnként visszametszhető. ') + (tools.pruner ? 'A metszőollód jó lesz hozzá.' : 'Metszőolló ajánlott hozzá.') });
+      if (sp.c === 'veg' || sp.c === 'fruit' || sp.c === 'herb') {
+        if (places.outdoor || places.balcony || places.greenhouse) tips.push({ e: '🌳', t: 'A szezonban kültéren, erkélyen vagy üvegházban a legboldogabb.' });
+        else tips.push({ e: '🏠', t: 'Sok közvetlen fény kell – napos ablak, erkély vagy üvegház ideális neki.' });
+      }
+      if (sp.c === 'succ') tips.push({ e: '🌵', t: 'Pozsgás: kevés víz, sok fény, jó vízelvezetésű kaktuszföld.' });
+      if (sp.temp) tips.push({ e: '🌡️', t: 'Ideális hőmérséklet kb. ' + sp.temp[0] + '–' + sp.temp[1] + ' °C.' });
+      if (sp.tox) tips.push({ e: '⚠️', t: 'Háziállatra/gyerekre mérgező lehet – tartsd elérhetetlen helyen.' });
+      return tips;
+    }
+
     /* ============================ SEGÉDEK ============================ */
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const cls = (...a) => a.filter(Boolean).join(' ');
@@ -562,7 +748,7 @@
     }
 
     /* ----- Tárolás ----- */
-    const defaultData = () => ({ plants: [], events: [], settings: { theme: 'system', notif: { enabled: false } }, version: 1 });
+    const defaultData = () => ({ plants: [], events: [], settings: { theme: 'system', notif: { enabled: false }, kit: { places: {}, tools: {} } }, version: 1 });
     function loadData() {
       try { const raw = localStorage.getItem(LS_KEY); if (raw) { const d = JSON.parse(raw); return { ...defaultData(), ...d, settings: { ...defaultData().settings, ...(d.settings || {}) } }; } }
       catch (e) {}
@@ -769,6 +955,8 @@
         deleteEvent(id) { setData(d => ({ ...d, events: d.events.filter(e => e.id !== id) })); },
         setTheme(theme) { setData(d => ({ ...d, settings: { ...d.settings, theme } })); },
         setNotif(patch) { setData(d => ({ ...d, settings: { ...d.settings, notif: { ...(d.settings.notif || {}), ...patch } } })); },
+        updateEvent(id, patch) { setData(d => ({ ...d, events: d.events.map(e => e.id === id ? { ...e, ...patch } : e) })); },
+        toggleKit(group, key) { setData(d => { const kit = d.settings.kit || { places: {}, tools: {} }; const g = { ...(kit[group] || {}) }; g[key] = !g[key]; return { ...d, settings: { ...d.settings, kit: { ...kit, [group]: g } } }; }); },
         importData(obj) { setData({ ...defaultData(), ...obj, settings: { ...defaultData().settings, ...(obj.settings || {}) } }); },
         resetData() { setData(defaultData()); },
         setAll(d) { setData(d); },
@@ -1076,12 +1264,13 @@
     }
 
     /* ============================ NÖVÉNY RÉSZLETEK ============================ */
-    function PlantDetail({ plantId, back, edit, logFor }) {
+    function PlantDetail({ plantId, back, edit, editEvent, logFor }) {
       const { data, addEvent, deleteEvent, toggleFav, toast } = useStore();
       const plant = data.plants.find(p => p.id === plantId);
       const events = useMemo(() => data.events.filter(e => e.plantId === plantId).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)), [data.events, plantId]);
       if (!plant) { back(); return null; }
 
+      const sp = plant.speciesKey ? SP_BY_KEY[plant.speciesKey] : null;
       const w = waterInfo(plant, data.events);
       const f = fertInfo(plant, data.events);
       const waterEvents = data.events.filter(e => e.plantId === plantId && e.type === 'water').map(e => e.date).sort();
@@ -1138,6 +1327,28 @@
             </div>
           </div>
 
+          {sp && (
+            <div style={{ marginBottom: 22 }}>
+              <div className="sec-title" style={{ marginBottom: 11 }}>Gondozási útmutató</div>
+              <div className="care-card">
+                <div className="row wrap" style={{ gap: 6, marginBottom: 13 }}>
+                  <span className="fact" style={{ color: DIFF[sp.diff].c, background: tint(DIFF[sp.diff].c, .14) }}>● {DIFF[sp.diff].l}</span>
+                  <span className="fact" style={{ color: 'var(--text-2)', background: 'var(--surface-3)' }}>🌡️ {sp.temp[0]}–{sp.temp[1]}°C</span>
+                  <span className="fact" style={{ color: 'var(--water)', background: tint('#2b9fe6', .12) }}>💨 {HUM[sp.hum]} pára</span>
+                  {sp.tox
+                    ? <span className="fact" style={{ color: 'var(--overdue)', background: tint('#e5484d', .12) }}>⚠️ Mérgező</span>
+                    : <span className="fact" style={{ color: 'var(--ok)', background: tint('#16a34a', .12) }}>✓ Nem mérgező</span>}
+                </div>
+                {careAdvice(sp, data.settings.kit).map((tip, i) => (
+                  <div className="tip" key={i}><span className="te">{tip.e}</span><span>{tip.t}</span></div>
+                ))}
+                {!hasAnyKit(data.settings.kit) && (
+                  <div className="muted-3" style={{ fontSize: 12, marginTop: 13, paddingTop: 13, borderTop: '1px solid var(--border)' }}>💡 A Beállításokban add meg a felszerelésed, és a tippek személyre szabottak lesznek.</div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="sec-title" style={{ marginBottom: 11 }}>Gyors rögzítés</div>
           <div className="ql-grid stagger" style={{ marginBottom: 22 }}>
             {EVENT_TYPES.map((t, i) => (
@@ -1175,13 +1386,13 @@
                   {evs.map(e => {
                     const t = ET[e.type];
                     return (
-                      <div className="tl-item" key={e.id}>
+                      <div className="tl-item" key={e.id} style={{ cursor: 'pointer' }} onClick={() => editEvent(e.id)}>
                         <div className="tl-ic" style={{ background: tint(t.color, .14) }}>{t.emoji}</div>
                         <div className="tl-main">
                           <div className="tl-type">{t.label}</div>
                           {e.note && <div className="tl-note">{e.note}</div>}
                         </div>
-                        <button className="iconbtn danger tl-del" style={{ width: 34, height: 34 }} onClick={() => deleteEvent(e.id)} aria-label="Törlés"><Icon name="trash" size={16} /></button>
+                        <button className="iconbtn danger tl-del" style={{ width: 34, height: 34 }} onClick={(ev) => { ev.stopPropagation(); deleteEvent(e.id); }} aria-label="Törlés"><Icon name="trash" size={16} /></button>
                       </div>
                     );
                   })}
@@ -1353,7 +1564,9 @@
 
     /* ============================ BEÁLLÍTÁSOK ============================ */
     function SettingsView() {
-      const { data, setTheme, setNotif, importData, resetData, toast } = useStore();
+      const { data, setTheme, setNotif, toggleKit, importData, resetData, toast } = useStore();
+      const kitPlaces = (data.settings.kit && data.settings.kit.places) || {};
+      const kitTools = (data.settings.kit && data.settings.kit.tools) || {};
       const fileRef = useRef(null);
       const [confirmReset, setConfirmReset] = useState(false);
       const [installEvt, setInstallEvt] = useState(window.__deferredInstall || null);
@@ -1420,6 +1633,19 @@
               ))}
             </div>
           </div>
+
+          <div className="sec-title" style={{ marginBottom: 11 }}>Otthonom és felszerelésem</div>
+          <div className="card card-pad" style={{ marginBottom: 8 }}>
+            <div className="field-label" style={{ marginBottom: 10 }}>🏡 Hol nevelsz növényt?</div>
+            <div className="kit-grid">
+              {KIT_PLACES.map(p => <button key={p.key} className={cls('kit-chip', kitPlaces[p.key] && 'on')} onClick={() => toggleKit('places', p.key)}>{p.emoji} {p.label}</button>)}
+            </div>
+            <div className="field-label" style={{ margin: '18px 0 10px' }}>🧰 Milyen eszközeid vannak?</div>
+            <div className="kit-grid">
+              {KIT_TOOLS.map(p => <button key={p.key} className={cls('kit-chip', kitTools[p.key] && 'on')} onClick={() => toggleKit('tools', p.key)}>{p.emoji} {p.label}</button>)}
+            </div>
+          </div>
+          <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 22, padding: '0 4px' }}>Ezek alapján a növényeknél személyre szabott gondozási tippeket kapsz – mit, mivel és mikor érdemes csinálni.</div>
 
           <div className="sec-title" style={{ marginBottom: 11 }}>Értesítések</div>
           <div className="card" style={{ marginBottom: 14 }}>
@@ -1509,11 +1735,26 @@
     function PlantForm({ plantId, close }) {
       const { data, addPlant, updatePlant, deletePlant, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
-      const [form, setForm] = useState(() => editing || { name: '', species: '', location: '', light: 'bright', potSize: '', soil: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+      const [form, setForm] = useState(() => editing || { name: '', species: '', speciesKey: null, location: '', light: 'bright', potSize: '', soil: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
       const [busy, setBusy] = useState(false);
       const [confirmDel, setConfirmDel] = useState(false);
+      const [spQuery, setSpQuery] = useState('');
+      const [spOpen, setSpOpen] = useState(false);
       const fileRef = useRef(null);
       const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+      const selectedSp = form.speciesKey ? SP_BY_KEY[form.speciesKey] : null;
+      const spResults = useMemo(() => {
+        const q = spQuery.trim().toLowerCase();
+        let arr = PLANT_DB;
+        if (q) arr = arr.filter(s => s.n.toLowerCase().includes(q) || s.lat.toLowerCase().includes(q) || PLANT_CATS[s.c].label.toLowerCase().includes(q));
+        return arr.slice(0, 50);
+      }, [spQuery]);
+      const pickSpecies = (s) => {
+        setForm(f => ({ ...f, speciesKey: s.k, species: s.lat, name: (f.name && f.name.trim()) ? f.name : s.n, light: s.light, waterIntervalDays: s.w, fertilizeIntervalDays: s.f }));
+        setSpOpen(false); setSpQuery('');
+      };
+      const clearSpecies = () => { set('speciesKey', null); setSpOpen(false); };
 
       const onPhoto = async e => {
         const file = e.target.files[0]; if (!file) return;
@@ -1536,7 +1777,49 @@
             <button className="btn btn-primary" style={{ flex: 2 }} onClick={save}><Icon name="check" size={18} />{editing ? 'Mentés' : 'Hozzáadás'}</button>
           </React.Fragment>}>
 
-          <label className="photo-pick" onClick={() => fileRef.current.click()}>
+          <div className="field">
+            <label>Növény típusa <span className="muted-3" style={{ fontWeight: 600 }}>· a gondozáshoz</span></label>
+            {selectedSp ? (
+              <div className="sp-selected">
+                <span className="sp-emoji">{PLANT_CATS[selectedSp.c].emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700 }}>{selectedSp.n}</div>
+                  <div className="muted-3" style={{ fontSize: 12.5, fontStyle: 'italic' }}>{selectedSp.lat}</div>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={clearSpecies}>Csere</button>
+              </div>
+            ) : (
+              <React.Fragment>
+                <input className="input" placeholder="Keress: pl. Monstera, kaktusz, bazsalikom…" value={spQuery}
+                  onChange={e => { setSpQuery(e.target.value); setSpOpen(true); }} onFocus={() => setSpOpen(true)} />
+                {spOpen && (
+                  <div className="sp-list">
+                    {spResults.map(s => (
+                      <button key={s.k} className="sp-row" onClick={() => pickSpecies(s)}>
+                        <span className="sp-emoji">{PLANT_CATS[s.c].emoji}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{s.n}</div>
+                          <div className="muted-3" style={{ fontSize: 12, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.lat}</div>
+                        </div>
+                        <span className="muted-3" style={{ fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{PLANT_CATS[s.c].label}</span>
+                      </button>
+                    ))}
+                    <button className="sp-row" style={{ justifyContent: 'center', color: 'var(--text-3)', fontWeight: 700 }} onClick={() => setSpOpen(false)}>Egyéni növény (kihagyom) ✕</button>
+                  </div>
+                )}
+              </React.Fragment>
+            )}
+          </div>
+          {selectedSp && (
+            <div className="care-card" style={{ marginBottom: 16 }}>
+              <div className="field-label" style={{ marginBottom: 10 }}>🌱 Ajánlott gondozás{hasAnyKit(data.settings.kit) ? ' (a felszerelésedre szabva)' : ''}</div>
+              {careAdvice(selectedSp, data.settings.kit).slice(0, 6).map((tip, i) => (
+                <div className="tip" key={i}><span className="te">{tip.e}</span><span>{tip.t}</span></div>
+              ))}
+            </div>
+          )}
+
+          <div className="photo-pick" onClick={() => fileRef.current.click()}>
             {form.photo ? <React.Fragment>
               <img src={form.photo} alt="" />
               <span className="photo-clear" onClick={e => { e.stopPropagation(); set('photo', null); }}><Icon name="x" size={16} /></span>
@@ -1545,7 +1828,7 @@
               {busy ? 'Feldolgozás…' : 'Fotó hozzáadása'}
             </React.Fragment>}
             <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
-          </label>
+          </div>
 
           <div style={{ height: 16 }} />
           <div className="field"><label>Név *</label><input className="input" value={form.name} placeholder="pl. Monstera a nappaliban" onChange={e => set('name', e.target.value)} /></div>
@@ -1643,6 +1926,40 @@
       );
     }
 
+    /* ============================ BEJEGYZÉS SZERKESZTÉSE ============================ */
+    function EventEdit({ eventId, close }) {
+      const { data, updateEvent, deleteEvent, toast } = useStore();
+      const ev = data.events.find(e => e.id === eventId);
+      const [type, setType] = useState(ev ? ev.type : 'water');
+      const [date, setDate] = useState(ev ? ev.date : todayISO());
+      const [note, setNote] = useState(ev ? (ev.note || '') : '');
+      if (!ev) { close(); return null; }
+      const plant = data.plants.find(p => p.id === ev.plantId);
+      const save = () => { updateEvent(eventId, { type, date, note: note.trim() }); toast('Bejegyzés frissítve', '✅'); close(); };
+      return (
+        <Sheet title="Bejegyzés szerkesztése" onClose={close}
+          foot={<React.Fragment>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={close}>Mégse</button>
+            <button className="btn btn-primary" style={{ flex: 2 }} onClick={save}><Icon name="check" size={18} />Mentés</button>
+          </React.Fragment>}>
+          {plant && <div className="muted" style={{ marginBottom: 14, fontWeight: 600 }}>🌱 {plant.name}</div>}
+          <div className="field">
+            <label>Típus</label>
+            <div className="ql-grid">
+              {EVENT_TYPES.map(t => (
+                <button key={t.key} className="ql-tile" style={{ borderColor: type === t.key ? t.color : 'var(--border)', background: type === t.key ? tint(t.color, .12) : 'var(--surface-2)', color: type === t.key ? t.color : 'var(--text-2)' }} onClick={() => setType(t.key)}>
+                  <span className="ql-emoji">{t.emoji}</span>{t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="field"><label>Dátum <span className="muted-3" style={{ fontWeight: 600 }}>· ettől számol az app</span></label><input className="input" type="date" value={date} max={todayISO()} onChange={e => setDate(e.target.value)} /></div>
+          <div className="field"><label>Jegyzet</label><textarea className="textarea" value={note} placeholder="Megjegyzés…" onChange={e => setNote(e.target.value)} style={{ minHeight: 70 }} /></div>
+          <button className="btn btn-danger btn-block" onClick={() => { deleteEvent(eventId); toast('Bejegyzés törölve', '🗑️'); close(); }}><Icon name="trash" size={17} />Bejegyzés törlése</button>
+        </Sheet>
+      );
+    }
+
     /* ============================ NAP ESEMÉNYEI ============================ */
     function DayModal({ iso, close, openPlant, addForDay }) {
       const { data, deleteEvent } = useStore();
@@ -1731,7 +2048,7 @@
       const showFab = ['dashboard', 'plants', 'calendar'].includes(view) && !detail;
 
       let main;
-      if (detail) main = <PlantDetail plantId={detail} back={() => setDetail(null)} edit={id => setModal({ type: 'form', plantId: id })} logFor={id => setModal({ type: 'log', plant: id })} />;
+      if (detail) main = <PlantDetail plantId={detail} back={() => setDetail(null)} edit={id => setModal({ type: 'form', plantId: id })} editEvent={id => setModal({ type: 'event', eventId: id })} logFor={id => setModal({ type: 'log', plant: id })} />;
       else if (view === 'dashboard') main = <Dashboard go={go} openPlant={openPlant} quickLog={() => setModal({ type: 'log' })} />;
       else if (view === 'plants') main = <PlantsList openPlant={openPlant} quickLog={() => setModal({ type: 'log' })} />;
       else if (view === 'calendar') main = <CalendarView openPlant={openPlant} openDay={iso => setModal({ type: 'day', iso })} />;
@@ -1783,6 +2100,7 @@
           {modal && modal.type === 'form' && <PlantForm plantId={modal.plantId} close={closeModal} />}
           {modal && modal.type === 'log' && <QuickLog presetPlant={modal.plant} close={closeModal} />}
           {modal && modal.type === 'day' && <DayModal iso={modal.iso} close={closeModal} openPlant={openPlant} addForDay={iso => setModal({ type: 'log' })} />}
+          {modal && modal.type === 'event' && <EventEdit eventId={modal.eventId} close={closeModal} />}
         </div>
       );
     }
