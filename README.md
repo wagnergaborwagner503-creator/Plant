@@ -12,7 +12,8 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 - **Növények** — kártyás nézet fotóval, állapotjelzővel (lemaradt / ma / hamarosan / rendben), kereséssel és szűréssel.
 - **🌿 Növénytár (95+ faj) + okos gondozási tippek** — új növénynél kiválaszthatod a faját (szobanövény, pozsgás, fűszer, zöldség, gyümölcs, virág, páfrány, pálma), és az app automatikusan beállítja a gondozást (fény, öntözés, tápoldat, átültetés), majd személyre szabott útmutatót ad: mit, mivel és mikor csinálj. A **Beállítások → Otthonom és felszerelésem** (szoba, erkély, üvegház, cserép, metszőolló, tápoldat, növénylámpa…) alapján a tippek a te lehetőségeidre szabottak.
 - **Növény részletek** — gyors rögzítés 9-féle eseménytípussal (öntözés, tápoldat, átültetés, metszés, permetezés, kártevő, forgatás, levéltisztítás, megfigyelés), gondozási útmutató, teljes napló idővonal és öntözési grafikon. A napló bejegyzéseire koppintva **átírhatod a dátumot** – az app innen számolja a következő öntözést.
-- **Naptár** — havi nézet az eseményekkel és a következő öntözések jelölésével.
+- **Naptár** — havi nézet a naplózott eseményekkel (telt pöttyök) ÉS a jövőbeli, előrejelzett teendőkkel (üreges pöttyök). Egy **jövőbeli napra koppintva** kiírja, melyik növényt mikor kell majd öntözni/tápoldatozni.
+- **📖 Tudástár** (Beállítások → Tudástár) — kereshető, kategóriánként szűrhető növény-enciklopédia (~300+ faj). A gyakori fajok pontos, a többi típus szerinti gondozási adattal. Bővíthető az `index.html`-ben (`PLANT_DB_EXTRA_INLINE` tömb).
 - **Statisztika** — gondozástípusok megoszlása, 12 hetes aktivitás, növényenkénti gondozásszám.
 - **Beállítások** — világos / sötét / rendszer téma, **otthonod és felszerelésed** megadása (a tippekhez), adat **exportálás és visszatöltés** (JSON mentés), tárhelyhasználat.
 - **🔔 Öntözési emlékeztetők** — értesítés egy nappal az öntözés előtt és aznap is, szerver nélkül (Androidon a háttérben is).
@@ -25,6 +26,7 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 1. Hozz létre egy új repót a GitHubon (pl. `palanta`).
 2. Töltsd fel ezeket a fájlokat a repó gyökerébe:
    - `index.html`, `manifest.json`, `sw.js`, `icon.svg`, `_headers`
+   - *(A teljes Tudástár-növényadatbázis mostantól az `index.html`-ben van – nincs külön feltöltendő fájl. A korábbi `plantdb.js` már nem szükséges, nyugodtan törölhető.)*
 3. A repóban: **Settings → Pages → Build and deployment → Source: „Deploy from a branch"**, ágnak válaszd a `main`-t, mappának a `/ (root)`-ot, majd **Save**.
 4. 1–2 perc múlva elérhető lesz itt: `https://<felhasznalonev>.github.io/palanta/`
 

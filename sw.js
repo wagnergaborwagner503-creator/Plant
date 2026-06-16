@@ -1,5 +1,5 @@
-// Palánta – Service Worker v3
-const CACHE = 'palanta-v3';
+// Palánta – Service Worker v7
+const CACHE = 'palanta-v7';
 
 // Telepítéskor azonnal átveszi az irányítást
 self.addEventListener('install', () => self.skipWaiting());
@@ -16,10 +16,10 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
 
-  // App shell (index.html, sw.js, manifest.json): mindig hálózatról, hogy soha ne legyen elavult
+  // App shell (index.html, sw.js, manifest.json): mindig friss hálózatról (a böngésző HTTP-cache-ét is kihagyva)
   if (url.endsWith('/') || url.endsWith('/index.html') || url.endsWith('/sw.js') || url.endsWith('/manifest.json')) {
     e.respondWith(
-      fetch(e.request).then(resp => {
+      fetch(e.request, { cache: 'no-store' }).then(resp => {
         if (resp && resp.status === 200) {
           const cloned = resp.clone();
           caches.open(CACHE).then(c => c.put(e.request, cloned));
