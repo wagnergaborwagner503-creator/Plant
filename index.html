@@ -1217,12 +1217,43 @@
       const [toasts, setToasts] = useState([]);
       const dataRef = useRef(data);
       dataRef.current = data;
+      const ready = useRef(false);
 
+      // ÖNJAVÍTÁS indításkor: ha a localStorage üres, de van IndexedDB biztonsági másolat, töltsük vissza.
       useEffect(() => {
+        let cancelled = false;
+        const safety = setTimeout(() => { ready.current = true; }, 1500); // ha az IndexedDB beragadna, akkor is engedjük a mentést
+        (async () => {
+          try {
+            const cur = dataRef.current;
+            if (cur.plants.length === 0 && cur.events.length === 0) {
+              const backup = await idbGet('fulldata');
+              if (!cancelled && backup && Array.isArray(backup.plants) && (backup.plants.length || (Array.isArray(backup.events) && backup.events.length))) {
+                setData({ ...defaultData(), ...backup, settings: { ...defaultData().settings, ...(backup.settings || {}) } });
+              }
+            }
+          } catch (e) {}
+          clearTimeout(safety);
+          ready.current = true;
+        })();
+        return () => { cancelled = true; clearTimeout(safety); };
+      }, []);
+
+      // MENTÉS: csak a helyreállítás után, és üres adatot SOHA nem írunk a meglévő jó adat fölé.
+      useEffect(() => {
+        if (!ready.current) return;
+        const empty = data.plants.length === 0 && data.events.length === 0;
+        if (empty) {
+          // Védelem: ha a memóriában üres, de a tárolóban/másolatban van adat → NE töröljük (valószínűleg betöltési hiba).
+          try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (raw) { const ex = JSON.parse(raw); if ((ex.plants && ex.plants.length) || (ex.events && ex.events.length)) return; }
+          } catch (e) { return; }
+        }
         try { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
         catch (e) { console.warn('Mentés sikertelen', e); }
-        // Ütemezés + beállítás tükrözése IndexedDB-be a háttér-értesítésekhez
         try {
+          idbSet('fulldata', data); // teljes biztonsági másolat (önjavításhoz)
           idbSet('schedule', scheduleFromData(data));
           idbSet('config', { enabled: !!(data.settings.notif && data.settings.notif.enabled) });
         } catch (e) {}
@@ -1285,7 +1316,7 @@
         updateEvent(id, patch) { setData(d => ({ ...d, events: d.events.map(e => e.id === id ? { ...e, ...patch } : e) })); },
         toggleKit(group, key) { setData(d => { const kit = d.settings.kit || { places: {}, tools: {} }; const g = { ...(kit[group] || {}) }; g[key] = !g[key]; return { ...d, settings: { ...d.settings, kit: { ...kit, [group]: g } } }; }); },
         importData(obj) { setData({ ...defaultData(), ...obj, settings: { ...defaultData().settings, ...(obj.settings || {}) } }); },
-        resetData() { setData(defaultData()); },
+        resetData() { try { localStorage.removeItem(LS_KEY); } catch (e) {} try { idbSet('fulldata', defaultData()); } catch (e) {} setData(defaultData()); },
         setAll(d) { setData(d); },
       }), []);
 
