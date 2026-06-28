@@ -14,6 +14,10 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 - **Növény részletek** — gyors rögzítés 9-féle eseménytípussal (öntözés, tápoldat, átültetés, metszés, permetezés, kártevő, forgatás, levéltisztítás, megfigyelés), gondozási útmutató, teljes napló idővonal és öntözési grafikon. A napló bejegyzéseire koppintva **átírhatod a dátumot** – az app innen számolja a következő öntözést.
 - **Naptár** — havi nézet a naplózott eseményekkel (telt pöttyök) ÉS a jövőbeli, előrejelzett teendőkkel (üreges pöttyök). Egy **jövőbeli napra koppintva** kiírja, melyik növényt mikor kell majd öntözni/tápoldatozni.
 - **📖 Tudástár** (Beállítások → Tudástár) — kereshető, kategóriánként szűrhető növény-enciklopédia (~300+ faj). A gyakori fajok pontos, a többi típus szerinti gondozási adattal. Bővíthető az `index.html`-ben (`PLANT_DB_EXTRA_INLINE` tömb).
+- **🍂 Évszak-érzékeny gondozás** — télen ritkábban öntöz (a növény ritmusához igazítva, pozsgásnál sokkal ritkábban), és a tápoldatot csak a növekedési időszakban ütemezi (télen a következő dátum a tavaszi szezonkezdet). A részletek és a Tudástár mutatja a téli öntözést, az **áttelelést** (pl. eper → hűvös garázs 0–5 °C) és a **kézi beporzást** (beltéri eper/paradicsom/citrus stb. – ecsettel).
+- **🏠 Bent / 🌳 Kint** beállítás növényenként – ehhez igazodnak a tippek (pl. beltéri beporzás).
+- **🔢 Kártya-jelzők** — a növénykártya fotóján bal felül 💧 + szám (öntözésig hátralévő nap), jobb felül 🌿 + szám (tápoldatig), állapot szerinti színnel.
+- **📦 Kertészeti leltár** (Beállítások → Kertészeti leltár) — vezesd, milyen cserepeid (méret, mennyiség), földjeid, kaspóid, eszközeid, tápoldataid vannak.
 - **Statisztika** — gondozástípusok megoszlása, 12 hetes aktivitás, növényenkénti gondozásszám.
 - **Beállítások** — világos / sötét / rendszer téma, **otthonod és felszerelésed** megadása (a tippekhez), adat **exportálás és visszatöltés** (JSON mentés), tárhelyhasználat.
 - **🔔 Öntözési emlékeztetők** — értesítés egy nappal az öntözés előtt és aznap is, szerver nélkül (Androidon a háttérben is).
