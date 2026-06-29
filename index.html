@@ -1033,13 +1033,36 @@
     // Cserép / föld segédek (leltár ↔ növény)
     const numOf = v => { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : null; };
     const parsePotDia = s => { const m = String(s || '').match(/(\d+([.,]\d+)?)/); return m ? numOf(m[1]) : null; };
+    const potShape = pot => (pot && pot.shape === 'square') ? 'square' : 'round';
+    const potHasDims = pot => potShape(pot) === 'square' ? !!(pot && (pot.len || pot.wid)) : !!(pot && pot.dia);
     function potLabel(pot) {
       if (!pot) return '';
-      if (pot.dia && pot.ht) return `Ø${pot.dia}×${pot.ht} cm`;
-      if (pot.dia) return `Ø${pot.dia} cm`;
+      const ht = pot.ht;
+      if (potShape(pot) === 'square') {
+        const l = pot.len, w = pot.wid;
+        if (l && w && ht) return `▢${l}×${w}×${ht} cm`;
+        if (l && w) return `▢${l}×${w} cm`;
+        if (l || w) return `▢${l || w} cm`;
+      } else {
+        if (pot.dia && ht) return `Ø${pot.dia}×${ht} cm`;
+        if (pot.dia) return `Ø${pot.dia} cm`;
+      }
       return pot.label || pot.size || '';
     }
-    const potKey = pot => (pot && pot.dia) ? ('d' + Number(pot.dia) + 'h' + Number(pot.ht || 0)) : ('s' + ((pot && (pot.size || pot.label)) || ''));
+    const potKey = pot => {
+      if (potShape(pot) === 'square' && (pot.len || pot.wid)) return 'q' + Number(pot.len || 0) + 'w' + Number(pot.wid || 0) + 'h' + Number(pot.ht || 0);
+      if (pot && pot.dia) return 'd' + Number(pot.dia) + 'h' + Number(pot.ht || 0);
+      return 'x' + ((pot && (pot.size || pot.label)) || '');
+    };
+    // Becsült földmennyiség (liter): a henger/hasáb térfogatának ~60%-a (gyökérzet + fejtér levonva)
+    function estimateSoilL(pot) {
+      const h = numOf(pot && pot.ht);
+      let vol = null;
+      if (potShape(pot) === 'square') { const l = numOf(pot && pot.len), w = numOf(pot && pot.wid); if (l && w && h) vol = l * w * h; }
+      else { const d = numOf(pot && pot.dia); if (d && h) vol = Math.PI * (d / 2) * (d / 2) * h; }
+      if (vol == null) return null;
+      return Math.max(0.1, Math.round(vol * 0.6 / 100) / 10);
+    }
 
     const hexToRgb = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
     const tint = (hex, a) => { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
@@ -1528,26 +1551,28 @@
         },
         // Átültetéskor a felszabadult régi cserép visszakerül a leltárba (+1 db)
         returnPotToInv(pot) {
-          if (!pot || (!pot.dia && !pot.label && !pot.size)) return;
+          if (!pot || (!pot.dia && !pot.len && !pot.wid && !pot.label && !pot.size)) return;
           setData(d => {
             const inv = (d.inventory || []).slice();
             if (pot.invId) { const i = inv.findIndex(x => x.id === pot.invId); if (i >= 0) { inv[i] = { ...inv[i], qty: (Number(inv[i].qty) || 0) + 1 }; return { ...d, inventory: inv }; } }
-            const mi = inv.findIndex(x => x.cat === 'pot' && potKey(x) === potKey(pot) && potKey(pot) !== 's');
+            const mi = inv.findIndex(x => x.cat === 'pot' && potKey(x) === potKey(pot) && potKey(pot) !== 'x');
             if (mi >= 0) inv[mi] = { ...inv[mi], qty: (Number(inv[mi].qty) || 0) + 1 };
-            else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', dia: pot.dia || '', ht: pot.ht || '', size: pot.dia ? '' : (pot.label || pot.size || ''), qty: 1, unit: 'db', notes: 'átültetéskor felszabadult' });
+            else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', shape: potShape(pot), dia: pot.dia || '', len: pot.len || '', wid: pot.wid || '', ht: pot.ht || '', size: potHasDims(pot) ? '' : (pot.label || pot.size || ''), qty: 1, unit: 'db', notes: 'átültetéskor felszabadult' });
             return { ...d, inventory: inv };
           });
         },
-        // A jelenlegi növények cserepeinek felvétele a leltárba (utólag módosítható)
+        // A jelenlegi növények cserepeinek felvétele a leltárba (közös cserepet csak egyszer; utólag módosítható)
         seedPotsFromPlants() {
           setData(d => {
             const inv = (d.inventory || []).slice();
+            const seen = new Set();
             (d.plants || []).forEach(p => {
-              const pot = (p.pot && (p.pot.dia || p.pot.label)) ? p.pot : (p.potSize ? { dia: parsePotDia(p.potSize), size: p.potSize } : null);
+              const pot = (p.pot && (p.pot.dia || p.pot.len || p.pot.wid || p.pot.label)) ? p.pot : (p.potSize ? { dia: parsePotDia(p.potSize), size: p.potSize } : null);
               if (!pot) return;
+              if (pot.potId) { if (seen.has(pot.potId)) return; seen.add(pot.potId); }
               const mi = inv.findIndex(x => x.cat === 'pot' && potKey(x) === potKey(pot));
               if (mi >= 0) inv[mi] = { ...inv[mi], qty: (Number(inv[mi].qty) || 0) + 1 };
-              else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', dia: (pot.dia || ''), ht: (pot.ht || ''), size: pot.dia ? '' : (pot.size || pot.label || ''), qty: 1, unit: 'db', notes: 'jelenlegi növényből' });
+              else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', shape: potShape(pot), dia: (pot.dia || ''), len: (pot.len || ''), wid: (pot.wid || ''), ht: (pot.ht || ''), size: potHasDims(pot) ? '' : (pot.size || pot.label || ''), qty: 1, unit: 'db', notes: 'jelenlegi növényből' });
             });
             return { ...d, inventory: inv };
           });
@@ -1915,6 +1940,7 @@
       const f = fertInfo(plant, data.events);
       const nextMove = nextMoveWithin(plant, data.events, -14, 30);
       const pollNow = pollinateActive(plant, data.events);
+      const potMates = (plant.pot && plant.pot.potId) ? data.plants.filter(p => p.id !== plantId && p.pot && p.pot.potId === plant.pot.potId) : [];
       const waterEvents = data.events.filter(e => e.plantId === plantId && e.type === 'water').map(e => e.date).sort();
       const gaps = waterEvents.slice(1).map((d, i) => daysBetween(waterEvents[i], d));
       const avgGap = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : null;
@@ -1954,6 +1980,7 @@
                 {(plant.placement === 'outdoor' && plant.city) && <span className="info-chip">📍 {plant.city}</span>}
                 {plant.light && <span className="info-chip">{LIGHT[plant.light].emoji} {LIGHT[plant.light].label.split(',')[0].split(' / ')[0]}</span>}
                 {(potLabel(plant.pot) || plant.potSize) && <span className="info-chip">🪴 {potLabel(plant.pot) || plant.potSize}</span>}
+                {potMates.length > 0 && <span className="info-chip">👯 Közös cserép: {potMates.map(p => p.name).join(', ')}</span>}
               </div>
             </div>
           </div>
@@ -2471,12 +2498,19 @@
       const { data, addPlant, updatePlant, deletePlant, consumeInv, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
       const [form, setForm] = useState(() => editing
-        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, deductInv: false, city: editing.city || '', potDia: (editing.pot && editing.pot.dia) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
-        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potDia: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilInvId: null, planter: '', planterInvId: null, deductInv: true, photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
+        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
       const inv = data.inventory || [];
       const invPots = inv.filter(i => i.cat === 'pot');
       const invSoils = inv.filter(i => i.cat === 'soil');
       const invPlanters = inv.filter(i => i.cat === 'planter');
+      const otherPlants = (data.plants || []).filter(p => p.id !== plantId && p.pot && (p.pot.dia || p.pot.len || p.pot.wid));
+      // Cserépméret változásakor automatikusan kitölti a becsült földmennyiséget (amíg a user kézzel nem írta felül)
+      const setPotField = (patch) => setForm(f => {
+        const nf = { ...f, ...patch };
+        if (!nf.soilTouched) { const est = estimateSoilL({ shape: nf.potShape, dia: nf.potDia, len: nf.potLen, wid: nf.potWid, ht: nf.potHt }); if (est != null) nf.soilUsedL = est; }
+        return nf;
+      });
       const [busy, setBusy] = useState(false);
       const [confirmDel, setConfirmDel] = useState(false);
       const [spQuery, setSpQuery] = useState('');
@@ -2506,16 +2540,29 @@
 
       const save = () => {
         if (!form.name.trim()) { toast('Adj nevet a növénynek', '🌱'); return; }
-        const pot = (form.potDia || form.potHt)
-          ? { dia: form.potDia ? Number(form.potDia) : '', ht: form.potHt ? Number(form.potHt) : '', invId: form.potInvId || null }
-          : ((editing && editing.pot) || null);
-        const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: form.soilUsedL ? Number(form.soilUsedL) : null };
-        ['potDia', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'deductInv'].forEach(k => delete payload[k]);
+        let pot = null, deduct = form.deductInv, soilL = form.soilUsedL ? Number(form.soilUsedL) : null;
+        if (!editing && form.potMode === 'share' && form.sharePlantId) {
+          // Közös cserép: a társ növény cserepét örököljük (azonos potId), nincs leltár-levonás
+          const src = (data.plants || []).find(p => p.id === form.sharePlantId);
+          if (src && src.pot) {
+            const srcPot = { ...src.pot };
+            if (!srcPot.potId) { srcPot.potId = uid(); updatePlant(src.id, { pot: srcPot }); }
+            pot = { ...srcPot }; deduct = false; soilL = null;
+          }
+        }
+        if (!pot) {
+          const hasDims = form.potShape === 'square' ? (form.potLen || form.potWid) : form.potDia;
+          pot = (hasDims || form.potHt)
+            ? { shape: form.potShape || 'round', dia: (form.potShape !== 'square' && form.potDia) ? Number(form.potDia) : '', len: (form.potShape === 'square' && form.potLen) ? Number(form.potLen) : '', wid: (form.potShape === 'square' && form.potWid) ? Number(form.potWid) : '', ht: form.potHt ? Number(form.potHt) : '', invId: form.potInvId || null, potId: (editing && editing.pot && editing.pot.potId) || uid() }
+            : ((editing && editing.pot) || null);
+        }
+        const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: soilL };
+        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
         if (editing) { updatePlant(editing.id, payload); toast('Mentve', '✅'); }
         else {
           addPlant(payload);
-          if (form.deductInv && (form.potInvId || form.planterInvId || (form.soilInvId && form.soilUsedL))) {
-            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, soilInvId: form.soilInvId, soilL: form.soilUsedL });
+          if (deduct && (form.potInvId || form.planterInvId || (form.soilInvId && soilL))) {
+            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, soilInvId: form.soilInvId, soilL });
           }
           toast('Növény hozzáadva', '🌿');
         }
@@ -2621,60 +2668,99 @@
           </div>
           <div className="sec-title" style={{ margin: '2px 0 10px' }}>🪴 Cserép és föld</div>
           <div className="care-card" style={{ marginBottom: 16 }}>
-            {invPots.length > 0 && (
+            {!editing && otherPlants.length > 0 && (
               <div className="field" style={{ marginBottom: 12 }}>
-                <label>Cserép a leltárból</label>
-                <select className="select" value={form.potInvId || ''} onChange={e => {
-                  const it = invPots.find(x => x.id === e.target.value);
-                  if (it) setForm(f => ({ ...f, potInvId: it.id, potDia: it.dia || '', potHt: it.ht || '' }));
-                  else setForm(f => ({ ...f, potInvId: null }));
-                }}>
-                  <option value="">— egyéni méret megadása —</option>
-                  {invPots.map(it => <option key={it.id} value={it.id}>{potLabel(it) || it.name}{it.qty != null ? ` · ${it.qty} db raktáron` : ''}</option>)}
-                </select>
+                <label>Hová ülteted?</label>
+                <div className="preset-row">
+                  {[['own', '🪴 Saját / új cserépbe'], ['share', '👯 Közös cserépbe']].map(([k, l]) => (
+                    <button key={k} className={cls('preset', (form.potMode || 'own') === k && 'on')} onClick={() => set('potMode', k)}>{l}</button>
+                  ))}
+                </div>
               </div>
             )}
-            <div className="field-row">
-              <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potDia} placeholder="pl. 18" onChange={e => set('potDia', e.target.value)} /></div>
-              <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potHt} placeholder="pl. 16" onChange={e => set('potHt', e.target.value)} /></div>
-            </div>
-            <div className="field" style={{ margin: '12px 0 0' }}>
-              <label>Föld / közeg</label>
-              {invSoils.length > 0 && (
-                <select className="select" style={{ marginBottom: 8 }} value={form.soilInvId || ''} onChange={e => {
-                  const it = invSoils.find(x => x.id === e.target.value);
-                  setForm(f => ({ ...f, soilInvId: it ? it.id : null, soil: it ? (it.name + (it.size ? ' (' + it.size + ')' : '')) : f.soil }));
-                }}>
-                  <option value="">— leltárból / egyéni —</option>
-                  {invSoils.map(it => <option key={it.id} value={it.id}>{it.name}{it.qty != null ? ` · ${it.qty} ${it.unit || 'l'} raktáron` : ''}</option>)}
+            {(!editing && form.potMode === 'share') ? (
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label>Melyik növény cserepébe? <span className="muted-3" style={{ fontWeight: 600 }}>· egy cserépbe több növény</span></label>
+                <select className="select" value={form.sharePlantId || ''} onChange={e => set('sharePlantId', e.target.value)}>
+                  <option value="">— válassz növényt —</option>
+                  {otherPlants.map(p => <option key={p.id} value={p.id}>{p.name}{potLabel(p.pot) ? ' · ' + potLabel(p.pot) : ''}</option>)}
                 </select>
-              )}
-              <input className="input" value={form.soil} placeholder="pl. Univerzális virágföld + perlit" onChange={e => set('soil', e.target.value)} />
-            </div>
-            <div className="field-row" style={{ marginTop: 12 }}>
-              <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált föld (l)</label><input className="input" type="number" inputMode="decimal" value={form.soilUsedL} placeholder="pl. 3" onChange={e => set('soilUsedL', e.target.value)} /></div>
-              {invPlanters.length > 0 && (
-                <div className="field" style={{ marginBottom: 0 }}><label>Kaspó (leltárból)</label>
-                  <select className="select" value={form.planterInvId || ''} onChange={e => { const it = invPlanters.find(x => x.id === e.target.value); setForm(f => ({ ...f, planterInvId: it ? it.id : null, planter: it ? it.name : '' })); }}>
-                    <option value="">— nincs —</option>
-                    {invPlanters.map(it => <option key={it.id} value={it.id}>{it.name}{it.size ? ' · ' + it.size : ''}{it.qty != null ? ` (${it.qty})` : ''}</option>)}
-                  </select>
+                <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 10 }}>A növény a kiválasztott cserépbe kerül a társa mellé – a leltár nem változik.</div>
+              </div>
+            ) : (
+              <React.Fragment>
+                {invPots.length > 0 && (
+                  <div className="field" style={{ marginBottom: 12 }}>
+                    <label>Cserép a leltárból</label>
+                    <select className="select" value={form.potInvId || ''} onChange={e => {
+                      const it = invPots.find(x => x.id === e.target.value);
+                      if (it) setPotField({ potInvId: it.id, potShape: it.shape || 'round', potDia: it.dia || '', potLen: it.len || '', potWid: it.wid || '', potHt: it.ht || '' });
+                      else set('potInvId', null);
+                    }}>
+                      <option value="">— egyéni méret megadása —</option>
+                      {invPots.map(it => <option key={it.id} value={it.id}>{potLabel(it) || it.name}{it.qty != null ? ` · ${it.qty} db raktáron` : ''}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div className="field" style={{ marginBottom: 12 }}>
+                  <label>Cserép formája</label>
+                  <div className="preset-row">
+                    {[['round', '⭕ Kerek'], ['square', '⬛ Négyzet']].map(([k, l]) => (
+                      <button key={k} className={cls('preset', (form.potShape || 'round') === k && 'on')} onClick={() => setPotField({ potShape: k })}>{l}</button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
-            {!editing && (
-              <button type="button" className="kit-chip" style={{ marginTop: 14, width: '100%', justifyContent: 'space-between' }} onClick={() => set('deductInv', !form.deductInv)}>
-                <span>📦 Vond le a felhasznált cserepet / földet a leltárból</span>
-                <span className={cls('switch', form.deductInv && 'on')} style={{ pointerEvents: 'none' }} />
-              </button>
+                {form.potShape === 'square' ? (
+                  <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    <div className="field" style={{ marginBottom: 0 }}><label>Hossz (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potLen} placeholder="pl. 30" onChange={e => setPotField({ potLen: e.target.value, potInvId: null })} /></div>
+                    <div className="field" style={{ marginBottom: 0 }}><label>Szél. (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potWid} placeholder="pl. 15" onChange={e => setPotField({ potWid: e.target.value, potInvId: null })} /></div>
+                    <div className="field" style={{ marginBottom: 0 }}><label>Mag. (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potHt} placeholder="pl. 18" onChange={e => setPotField({ potHt: e.target.value, potInvId: null })} /></div>
+                  </div>
+                ) : (
+                  <div className="field-row">
+                    <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potDia} placeholder="pl. 18" onChange={e => setPotField({ potDia: e.target.value, potInvId: null })} /></div>
+                    <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potHt} placeholder="pl. 16" onChange={e => setPotField({ potHt: e.target.value, potInvId: null })} /></div>
+                  </div>
+                )}
+                <div className="field" style={{ margin: '12px 0 0' }}>
+                  <label>Föld / közeg</label>
+                  {invSoils.length > 0 && (
+                    <select className="select" style={{ marginBottom: 8 }} value={form.soilInvId || ''} onChange={e => {
+                      const it = invSoils.find(x => x.id === e.target.value);
+                      setForm(f => ({ ...f, soilInvId: it ? it.id : null, soil: it ? (it.name + (it.size ? ' (' + it.size + ')' : '')) : f.soil }));
+                    }}>
+                      <option value="">— leltárból / egyéni —</option>
+                      {invSoils.map(it => <option key={it.id} value={it.id}>{it.name}{it.qty != null ? ` · ${it.qty} ${it.unit || 'l'} raktáron` : ''}</option>)}
+                    </select>
+                  )}
+                  <input className="input" value={form.soil} placeholder="pl. Univerzális virágföld + perlit" onChange={e => set('soil', e.target.value)} />
+                </div>
+                <div className="field-row" style={{ marginTop: 12 }}>
+                  <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált föld (l) <span className="muted-3" style={{ fontWeight: 600 }}>· becsült</span></label><input className="input" type="number" inputMode="decimal" value={form.soilUsedL} placeholder="pl. 3" onChange={e => setForm(f => ({ ...f, soilUsedL: e.target.value, soilTouched: true }))} /></div>
+                  {invPlanters.length > 0 && (
+                    <div className="field" style={{ marginBottom: 0 }}><label>Kaspó (leltárból)</label>
+                      <select className="select" value={form.planterInvId || ''} onChange={e => { const it = invPlanters.find(x => x.id === e.target.value); setForm(f => ({ ...f, planterInvId: it ? it.id : null, planter: it ? it.name : '' })); }}>
+                        <option value="">— nincs —</option>
+                        {invPlanters.map(it => <option key={it.id} value={it.id}>{it.name}{it.size ? ' · ' + it.size : ''}{it.qty != null ? ` (${it.qty})` : ''}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                {!editing && (
+                  <button type="button" className="kit-chip" style={{ marginTop: 14, width: '100%', justifyContent: 'space-between' }} onClick={() => set('deductInv', !form.deductInv)}>
+                    <span>📦 Vond le a felhasznált cserepet / földet a leltárból</span>
+                    <span className={cls('switch', form.deductInv && 'on')} style={{ pointerEvents: 'none' }} />
+                  </button>
+                )}
+                <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
+                  {editing
+                    ? 'Átültetéshez / cserépcseréhez használd a növény oldalán a „🪴 Átültetés” gombot – az a régi cserepet visszateszi a leltárba, az újat hozzárendeli, és levonja a felhasznált földet.'
+                    : (form.deductInv
+                      ? 'A föld mennyiségét a méretből megbecsüljük (módosíthatod). Mentéskor a leltári cserép −1 db, a föld −annyi liter lesz. Ha a növény a saját cserepével érkezett, kapcsold ki.'
+                      : 'A leltár nem változik – pl. ha a növény a saját cserepével érkezett. (Az később, átültetéskor kerül vissza a leltárba.)')}
+                </div>
+              </React.Fragment>
             )}
-            <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
-              {editing
-                ? 'Átültetéshez / cserépcseréhez használd a növény oldalán a „🪴 Átültetés” gombot – az a régi cserepet visszateszi a leltárba, az újat hozzárendeli, és levonja a felhasznált földet.'
-                : (form.deductInv
-                  ? 'Mentéskor a kiválasztott leltári cserép −1 db, a megadott föld pedig −annyi liter lesz. Ha a növény a saját cserepével érkezett (új vásárlás), kapcsold ki.'
-                  : 'A leltár nem változik – pl. ha a növény a saját cserepével érkezett. (Az később, átültetéskor kerül vissza a leltárba.)')}
-            </div>
           </div>
           <div className="field"><label>Jegyzet</label><textarea className="textarea" value={form.notes} placeholder="Bármi fontos tudnivaló…" onChange={e => set('notes', e.target.value)} /></div>
 
@@ -2978,14 +3064,20 @@
       const { data, addInv, updateInv, deleteInv, seedPotsFromPlants, toast } = useStore();
       const inv = data.inventory || [];
       const [editing, setEditing] = useState(null);
-      const [form, setForm] = useState({ name: '', cat: 'pot', dia: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' });
+      const [form, setForm] = useState({ name: '', cat: 'pot', shape: 'round', dia: '', len: '', wid: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' });
       const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-      const startNew = () => { setForm({ name: '', cat: 'pot', dia: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' }); setEditing('new'); };
-      const startEdit = (it) => { setForm({ name: it.name || '', cat: it.cat || 'other', dia: it.dia || '', ht: it.ht || '', size: it.size || '', qty: it.qty != null ? it.qty : 1, unit: it.unit || 'db', notes: it.notes || '' }); setEditing(it.id); };
+      const startNew = () => { setForm({ name: '', cat: 'pot', shape: 'round', dia: '', len: '', wid: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' }); setEditing('new'); };
+      const startEdit = (it) => { setForm({ name: it.name || '', cat: it.cat || 'other', shape: it.shape || 'round', dia: it.dia || '', len: it.len || '', wid: it.wid || '', ht: it.ht || '', size: it.size || '', qty: it.qty != null ? it.qty : 1, unit: it.unit || 'db', notes: it.notes || '' }); setEditing(it.id); };
       const save = () => {
         if (!form.name.trim()) { toast('Adj megnevezést', '📦'); return; }
         const item = { ...form, qty: Number(form.qty) || 0 };
-        if (form.cat === 'pot') { item.dia = form.dia ? Number(form.dia) : ''; item.ht = form.ht ? Number(form.ht) : ''; if (!item.size && (item.dia || item.ht)) item.size = potLabel(item); }
+        if (form.cat === 'pot') {
+          item.dia = (form.shape !== 'square' && form.dia) ? Number(form.dia) : '';
+          item.len = (form.shape === 'square' && form.len) ? Number(form.len) : '';
+          item.wid = (form.shape === 'square' && form.wid) ? Number(form.wid) : '';
+          item.ht = form.ht ? Number(form.ht) : '';
+          item.size = (item.dia || item.len || item.wid) ? '' : item.size;
+        }
         if (editing === 'new') { addInv(item); toast('Hozzáadva a leltárhoz', '📦'); } else { updateInv(editing, item); toast('Mentve', '✅'); }
         setEditing(null);
       };
@@ -3006,10 +3098,27 @@
               </select>
             </div>
             {form.cat === 'pot' ? (
-              <div className="field-row">
-                <div className="field"><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.dia} placeholder="pl. 18" onChange={e => set('dia', e.target.value)} /></div>
-                <div className="field"><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.ht} placeholder="pl. 16" onChange={e => set('ht', e.target.value)} /></div>
-              </div>
+              <React.Fragment>
+                <div className="field"><label>Forma</label>
+                  <div className="preset-row">
+                    {[['round', '⭕ Kerek'], ['square', '⬛ Négyzet']].map(([k, l]) => (
+                      <button key={k} className={cls('preset', (form.shape || 'round') === k && 'on')} onClick={() => set('shape', k)}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+                {form.shape === 'square' ? (
+                  <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    <div className="field"><label>Hossz (cm)</label><input className="input" type="number" inputMode="numeric" value={form.len} placeholder="pl. 30" onChange={e => set('len', e.target.value)} /></div>
+                    <div className="field"><label>Szél. (cm)</label><input className="input" type="number" inputMode="numeric" value={form.wid} placeholder="pl. 15" onChange={e => set('wid', e.target.value)} /></div>
+                    <div className="field"><label>Mag. (cm)</label><input className="input" type="number" inputMode="numeric" value={form.ht} placeholder="pl. 18" onChange={e => set('ht', e.target.value)} /></div>
+                  </div>
+                ) : (
+                  <div className="field-row">
+                    <div className="field"><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.dia} placeholder="pl. 18" onChange={e => set('dia', e.target.value)} /></div>
+                    <div className="field"><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.ht} placeholder="pl. 16" onChange={e => set('ht', e.target.value)} /></div>
+                  </div>
+                )}
+              </React.Fragment>
             ) : (
               <div className="field"><label>Méret / típus (opcionális)</label><input className="input" value={form.size} placeholder="pl. savanyú, 5 literes, 40 cm" onChange={e => set('size', e.target.value)} /></div>
             )}
@@ -3073,19 +3182,25 @@
       const invPots = inv.filter(i => i.cat === 'pot');
       const invSoils = inv.filter(i => i.cat === 'soil');
       const [potInvId, setPotInvId] = useState('');
+      const [shape, setShape] = useState('round');
       const [dia, setDia] = useState('');
+      const [side, setSide] = useState('');
       const [ht, setHt] = useState('');
       const [soilInvId, setSoilInvId] = useState('');
       const [soilName, setSoilName] = useState(plant ? (plant.soil || '') : '');
       const [soilL, setSoilL] = useState('');
+      const [soilTouched, setSoilTouched] = useState(false);
       const [returnOld, setReturnOld] = useState(true);
       if (!plant) { close(); return null; }
       const oldPot = plant.pot || (plant.potSize ? { dia: parsePotDia(plant.potSize), size: plant.potSize } : null);
+      const sharedMates = (data.plants || []).filter(p => p.id !== plantId && p.pot && oldPot && oldPot.potId && p.pot.potId === oldPot.potId);
 
-      const pickPot = (id) => { setPotInvId(id); const it = invPots.find(x => x.id === id); if (it) { setDia(it.dia || ''); setHt(it.ht || ''); } };
+      const autoSoil = (sh, d, sd, h) => { if (!soilTouched) { const est = estimateSoilL({ shape: sh, dia: d, side: sd, ht: h }); if (est != null) setSoilL(est); } };
+      const pickPot = (id) => { setPotInvId(id); const it = invPots.find(x => x.id === id); if (it) { const sh = it.shape || 'round'; setShape(sh); setDia(it.dia || ''); setSide(it.side || ''); setHt(it.ht || ''); autoSoil(sh, it.dia, it.side, it.ht); } };
       const confirm = () => {
-        const newPot = (dia || ht) ? { dia: dia ? Number(dia) : '', ht: ht ? Number(ht) : '', invId: potInvId || null } : null;
-        if (returnOld && oldPot) returnPotToInv(oldPot);
+        const hasDims = shape === 'square' ? side : dia;
+        const newPot = (hasDims || ht) ? { shape, dia: (shape !== 'square' && dia) ? Number(dia) : '', side: (shape === 'square' && side) ? Number(side) : '', ht: ht ? Number(ht) : '', invId: potInvId || null, potId: uid() } : null;
+        if (returnOld && oldPot && !sharedMates.length) returnPotToInv(oldPot);
         consumeInv({ potInvId: potInvId || null, soilInvId: soilInvId || null, soilL: soilL ? Number(soilL) : 0 });
         updatePlant(plantId, { pot: newPot || oldPot, potSize: potLabel(newPot) || plant.potSize, soil: soilName || plant.soil, soilUsedL: soilL ? Number(soilL) : (plant.soilUsedL || null) });
         addEvent({ plantId, type: 'repot', note: 'Átültetve' + (newPot && potLabel(newPot) ? ' – ' + potLabel(newPot) : '') });
@@ -3110,9 +3225,20 @@
               </select>
             </div>
           )}
+          <div className="field"><label>Forma</label>
+            <div className="preset-row">
+              {[['round', '⭕ Kerek'], ['square', '⬛ Négyzet']].map(([k, l]) => (
+                <button key={k} className={cls('preset', shape === k && 'on')} onClick={() => { setShape(k); setPotInvId(''); autoSoil(k, dia, side, ht); }}>{l}</button>
+              ))}
+            </div>
+          </div>
           <div className="field-row">
-            <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={dia} placeholder="pl. 22" onChange={e => { setDia(e.target.value); setPotInvId(''); }} /></div>
-            <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 20" onChange={e => { setHt(e.target.value); setPotInvId(''); }} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>{shape === 'square' ? 'Oldalhossz (cm)' : 'Átmérő (cm)'}</label>
+              {shape === 'square'
+                ? <input className="input" type="number" inputMode="numeric" value={side} placeholder="pl. 18" onChange={e => { setSide(e.target.value); setPotInvId(''); autoSoil('square', dia, e.target.value, ht); }} />
+                : <input className="input" type="number" inputMode="numeric" value={dia} placeholder="pl. 22" onChange={e => { setDia(e.target.value); setPotInvId(''); autoSoil('round', e.target.value, side, ht); }} />}
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 20" onChange={e => { setHt(e.target.value); setPotInvId(''); autoSoil(shape, dia, side, e.target.value); }} /></div>
           </div>
 
           <div className="sec-title" style={{ margin: '18px 0 10px' }}>Föld</div>
@@ -3126,17 +3252,19 @@
           )}
           <div className="field-row">
             <div className="field" style={{ marginBottom: 0 }}><label>Föld megnevezése</label><input className="input" value={soilName} placeholder="pl. Univerzális" onChange={e => setSoilName(e.target.value)} /></div>
-            <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált (l)</label><input className="input" type="number" inputMode="decimal" value={soilL} placeholder="pl. 4" onChange={e => setSoilL(e.target.value)} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált (l) <span className="muted-3" style={{ fontWeight: 600 }}>· becsült</span></label><input className="input" type="number" inputMode="decimal" value={soilL} placeholder="pl. 4" onChange={e => { setSoilL(e.target.value); setSoilTouched(true); }} /></div>
           </div>
 
-          {oldPot && (potLabel(oldPot) || oldPot.dia) && (
+          {sharedMates.length > 0 ? (
+            <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 16 }}>♻️ A régi cserép közös ({sharedMates.map(p => p.name).join(', ')} is benne van), ezért nem kerül vissza a leltárba.</div>
+          ) : (oldPot && (potLabel(oldPot) || oldPot.dia || oldPot.side)) ? (
             <button type="button" className="kit-chip" style={{ width: '100%', justifyContent: 'space-between', marginTop: 16 }} onClick={() => setReturnOld(!returnOld)}>
               <span>♻️ A régi cserép ({potLabel(oldPot) || 'cserép'}) vissza a leltárba</span>
               <span className={cls('switch', returnOld && 'on')} style={{ pointerEvents: 'none' }} />
             </button>
-          )}
+          ) : null}
           <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
-            Rögzítéskor a régi cserép visszakerül a leltárba (+1 db), a kiválasztott új leltári cserép −1 db, a megadott föld pedig −annyi liter lesz, és új „Átültetés” bejegyzés készül a naplóba.
+            A föld mennyiségét a cserép méretéből megbecsüljük (módosíthatod). Rögzítéskor a régi cserép visszakerül a leltárba (+1 db, ha nem közös), a kiválasztott új leltári cserép −1 db, a föld −annyi liter lesz, és új „Átültetés” bejegyzés készül a naplóba.
           </div>
         </Sheet>
       );
