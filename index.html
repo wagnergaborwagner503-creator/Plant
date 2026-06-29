@@ -656,6 +656,7 @@
       { k: 'strelitzia', n: 'Papagájvirág', lat: 'Strelitzia reginae', c: 'house', light: 'direct', w: 8, f: 30, r: 24, hum: 'med', temp: [16, 28], tox: 1, diff: 'med', prune: 0, tip: 'Sok fény kell, hogy virágozzon.' },
       { k: 'beaucarnea', n: 'Elefántláb', lat: 'Beaucarnea recurvata', c: 'house', light: 'bright', w: 16, f: 60, r: 36, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 0, tip: 'Törzsében tárolja a vizet – ritkán öntözd.' },
       { k: 'cissus', n: 'Szobai szőlő', lat: 'Cissus rhombifolia', c: 'house', light: 'medium', w: 7, f: 45, r: 18, hum: 'med', temp: [15, 25], tox: 0, diff: 'easy', prune: 1, tip: 'Gyors kúszó; rendszeresen metszhető.' },
+      { k: 'venusflytrap', n: 'Vénusz légycsapója', lat: 'Dionaea muscipula', c: 'house', light: 'direct', w: 2, f: 0, r: 12, hum: 'high', temp: [5, 35], tox: 0, diff: 'hard', prune: 1, overwinter: { temp: [0, 10], note: 'téli álmot igényel – késő ősztől kb. 3 hónapra hűvös, fagymentes helyre (0–10 °C, pl. hideg ablak, fűtetlen szoba, garázs); ilyenkor alig öntözd, nem nő. A pihenő nélkül legyengül.' }, tip: 'Húsevő! CSAK eső- vagy desztillált vízzel öntözd (a csapvíz mésze/sója tönkreteszi); savanyú tőzeg + perlit közeg kell, SOHA ne tápoldatozd – a rovarokból táplálkozik. Tartsd nedvesen, alátétes (tálcás) állóvízben, sok napfényen. Ne ingereld feleslegesen a csapdákat.' },
       // — Páfrányok —
       { k: 'nephrolepis', n: 'Kardpáfrány', lat: 'Nephrolepis exaltata', c: 'fern', light: 'medium', w: 4, f: 45, r: 18, hum: 'high', temp: [16, 24], tox: 0, diff: 'med', prune: 0, tip: 'Folyamatosan nyirkos föld + magas pára.' },
       { k: 'adiantum', n: 'Vénuszhaj páfrány', lat: 'Adiantum', c: 'fern', light: 'medium', w: 3, f: 45, r: 18, hum: 'high', temp: [16, 23], tox: 0, diff: 'hard', prune: 0, tip: 'Soha ne száradjon ki; nagyon párás hely kell.' },
@@ -994,6 +995,7 @@
     function careAdvice(sp, kit, placement) {
       kit = kit || {}; const tools = kit.tools || {}; const places = kit.places || {};
       const tips = [];
+      if (sp.tip) tips.push({ e: '🌱', t: sp.tip });   // faj-specifikus kulcstanács (pl. húsevőnél: csak esővíz, ne tápoldatozd)
       let lt = 'Fény: ' + LIGHT[sp.light].label.toLowerCase() + '.';
       if (sp.light === 'bright' || sp.light === 'direct') lt += tools.growlight ? ' Sötétebb helyen a növénylámpád segít.' : ' Ha nincs elég természetes fény, növénylámpa ajánlott.';
       tips.push({ e: '☀️', t: lt });
