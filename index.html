@@ -545,17 +545,22 @@
     const LS_KEY = 'palanta.data.v1';
 
     const EVENT_TYPES = [
-      { key: 'water',     label: 'Öntözés',        emoji: '💧', color: '#2b9fe6', verb: 'megöntözve' },
-      { key: 'fertilize', label: 'Tápoldat',       emoji: '🌿', color: '#16a34a', verb: 'tápoldatozva' },
-      { key: 'repot',     label: 'Átültetés',      emoji: '🪴', color: '#c2410c', verb: 'átültetve' },
-      { key: 'prune',     label: 'Metszés',        emoji: '✂️', color: '#8b5cf6', verb: 'megmetszve' },
-      { key: 'mist',      label: 'Permetezés',     emoji: '💨', color: '#0891b2', verb: 'lepermetezve' },
-      { key: 'pest',      label: 'Kártevő',        emoji: '🐛', color: '#dc2626', verb: 'kezelve' },
-      { key: 'rotate',    label: 'Forgatás',       emoji: '🔄', color: '#64748b', verb: 'elforgatva' },
-      { key: 'clean',     label: 'Levéltisztítás', emoji: '🧽', color: '#0d9488', verb: 'megtisztítva' },
-      { key: 'note',      label: 'Megfigyelés',    emoji: '📝', color: '#6b7280', verb: 'feljegyezve' },
+      { key: 'water',     label: 'Öntözés',     emoji: '💧', color: '#2b9fe6', verb: 'megöntözve' },
+      { key: 'fertilize', label: 'Tápoldat',    emoji: '🌿', color: '#16a34a', verb: 'tápoldatozva' },
+      { key: 'repot',     label: 'Átültetés',   emoji: '🪴', color: '#c2410c', verb: 'átültetve' },
+      { key: 'prune',     label: 'Metszés',     emoji: '✂️', color: '#8b5cf6', verb: 'megmetszve' },
+      { key: 'mist',      label: 'Permetezés',  emoji: '💨', color: '#0891b2', verb: 'lepermetezve' },
+      { key: 'pest',      label: 'Kártevő',     emoji: '🐛', color: '#dc2626', verb: 'kezelve' },
+      { key: 'rotate',    label: 'Forgatás',    emoji: '🔄', color: '#64748b', verb: 'elforgatva' },
+      { key: 'pollinate', label: 'Beporzás',    emoji: '🖌️', color: '#db2777', verb: 'beporozva' },
+      { key: 'move',      label: 'Költöztetés', emoji: '🚚', color: '#0d9488', verb: 'átköltöztetve' },
     ];
-    const ET = Object.fromEntries(EVENT_TYPES.map(t => [t.key, t]));
+    // Régi, már nem választható típusok – hogy a korábban rögzített bejegyzések ne törjenek el
+    const LEGACY_EVENT_TYPES = [
+      { key: 'clean', label: 'Levéltisztítás', emoji: '🧽', color: '#0d9488', verb: 'megtisztítva' },
+      { key: 'note',  label: 'Megfigyelés',    emoji: '📝', color: '#6b7280', verb: 'feljegyezve' },
+    ];
+    const ET = Object.fromEntries(EVENT_TYPES.concat(LEGACY_EVENT_TYPES).map(t => [t.key, t]));
 
     const LIGHT_LEVELS = [
       { key: 'low',    label: 'Árnyék / kevés fény', emoji: '🌑' },
@@ -596,7 +601,7 @@
       ornamental_grass: { light: 'direct', w: 6, f: 30, r: 0, hum: 'low', temp: [-15, 32], tox: 0, diff: 'easy', prune: 1, tip: 'Dísznövényfű; kora tavasszal vágd vissza tőre.' },
       leafy_veg:        { light: 'bright', w: 2, f: 21, r: 0, hum: 'med', temp: [6, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Levélzöldség; hűvöskedvelő, tartsd egyenletesen nyirkosan.' },
       root_veg:         { light: 'direct', w: 4, f: 21, r: 0, hum: 'low', temp: [6, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Gyökérzöldség; mély, laza, kőmentes talaj kell.' },
-      fruiting_veg:     { light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [16, 30], tox: 0, diff: 'med', prune: 1, fertMonths: [5, 8], pollinate: 'virágzáskor rázd meg finoman a növényt, vagy puha ecsettel vidd át a pollent virágról virágra (főleg beltéren).', tip: 'Termőzöldség; sok nap, egyenletes víz és tápanyag.' },
+      fruiting_veg:     { light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [16, 30], tox: 0, diff: 'med', prune: 1, fertMonths: [5, 8], bloomMonths: [6, 8], pollinate: 'virágzáskor rázd meg finoman a növényt, vagy puha ecsettel vidd át a pollent virágról virágra (főleg beltéren).', tip: 'Termőzöldség; sok nap, egyenletes víz és tápanyag.' },
       brassica:         { light: 'bright', w: 3, f: 21, r: 0, hum: 'med', temp: [6, 22], tox: 0, diff: 'med', prune: 0, tip: 'Káposztaféle; hűvöskedvelő és tápigényes.' },
       legume_veg:       { light: 'direct', w: 3, f: 0, r: 0, hum: 'med', temp: [10, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Hüvelyes; maga köti a nitrogént, kevés tápoldat kell. A kúszóknak adj támaszt.' },
       foliage_house:    { light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Dísz-leveles szobanövény; szórt fény, a felső réteg száradjon meg öntözés közt.' },
@@ -605,7 +610,7 @@
       cactus_arch:      { light: 'direct', w: 16, f: 60, r: 36, hum: 'low', temp: [8, 32], tox: 0, diff: 'easy', prune: 0, tip: 'Kaktusz; nyáron ritkán, télen szinte egyáltalán ne öntözd.' },
       herb_arch:        { light: 'direct', w: 4, f: 21, r: 0, hum: 'low', temp: [8, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Fűszernövény; napos hely, mértékletes öntözés; a rendszeres szedés bokrosít.' },
       fruit_bush:       { light: 'direct', w: 4, f: 30, r: 0, hum: 'med', temp: [-15, 30], tox: 0, diff: 'med', prune: 1, tip: 'Bogyós gyümölcs; termés után vagy télen metszést igényel.' },
-      citrus_arch:      { light: 'direct', w: 5, f: 21, r: 36, hum: 'med', temp: [8, 32], tox: 0, diff: 'med', prune: 1, pollinate: 'beltéri virágzáskor puha ecsettel porozd be a virágokat.', overwinter: { temp: [5, 12], note: 'fagymentes, fényes, hűvös helyen teleltesd (5–12 °C), és alig öntözd.' }, tip: 'Citrusféle; télen fagymentes, fényes hely, ne álljon vízben.' },
+      citrus_arch:      { light: 'direct', w: 5, f: 21, r: 36, hum: 'med', temp: [8, 32], tox: 0, diff: 'med', prune: 1, bloomMonths: [4, 6], pollinate: 'beltéri virágzáskor puha ecsettel porozd be a virágokat.', overwinter: { temp: [5, 12], note: 'fagymentes, fényes, hűvös helyen teleltesd (5–12 °C), és alig öntözd.' }, tip: 'Citrusféle; télen fagymentes, fényes hely, ne álljon vízben.' },
       orchid_arch:      { light: 'bright', w: 7, f: 14, r: 24, hum: 'high', temp: [16, 28], tox: 0, diff: 'med', prune: 0, tip: 'Orchidea; áztatásos öntözés, jó légjárás a gyökereknek.' },
       fern_arch:        { light: 'medium', w: 4, f: 45, r: 18, hum: 'high', temp: [16, 24], tox: 0, diff: 'med', prune: 0, tip: 'Páfrány; folyamatosan nyirkos föld és magas pára kell.' },
       palm_arch:        { light: 'bright', w: 7, f: 45, r: 24, hum: 'med', temp: [16, 27], tox: 0, diff: 'easy', prune: 0, tip: 'Pálma; szórt-világos fény, ne száradjon ki teljesen.' },
@@ -676,7 +681,7 @@
       // — Fűszernövények —
       { k: 'basil', n: 'Bazsalikom', lat: 'Ocimum basilicum', c: 'herb', light: 'direct', w: 2, f: 21, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'easy', prune: 1, tip: 'Csípd a tetejét a dús bokrosodásért; sok fény + víz.' },
       { k: 'parsley', n: 'Petrezselyem', lat: 'Petroselinum crispum', c: 'herb', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [10, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Kívülről befelé szedd a szárakat.' },
-      { k: 'rosemary', n: 'Rozmaring', lat: 'Salvia rosmarinus', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'med', prune: 1, tip: 'Mediterrán – ne öntözd túl.' },
+      { k: 'rosemary', n: 'Rozmaring', lat: 'Salvia rosmarinus', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'med', prune: 1, overwinter: { temp: [3, 10], note: 'félig fagytűrő – tartós fagy elől vidd fényes, hűvös helyre (pl. hideg veranda, télikert), és csak ritkán öntözd.' }, tip: 'Mediterrán – ne öntözd túl.' },
       { k: 'thyme', n: 'Kakukkfű', lat: 'Thymus vulgaris', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'easy', prune: 1, tip: 'Száraz, napos helyet szeret.' },
       { k: 'oregano', n: 'Oregánó', lat: 'Origanum vulgare', c: 'herb', light: 'direct', w: 5, f: 45, r: 24, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Virágzás előtt a legaromásabb.' },
       { k: 'mint', n: 'Menta', lat: 'Mentha', c: 'herb', light: 'bright', w: 2, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Terjeszkedő – tartsd külön cserépben!' },
@@ -687,10 +692,10 @@
       { k: 'lemonbalm', n: 'Citromfű', lat: 'Melissa officinalis', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Citromos illat; teának is kiváló.' },
       { k: 'lavender', n: 'Levendula', lat: 'Lavandula', c: 'herb', light: 'direct', w: 7, f: 45, r: 24, hum: 'low', temp: [5, 30], tox: 0, diff: 'med', prune: 1, tip: 'Napos, jó vízelvezetésű talaj; virágzás után metszd.' },
       // — Zöldségek —
-      { k: 'tomato', n: 'Paradicsom', lat: 'Solanum lycopersicum', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [15, 30], tox: 0, diff: 'med', prune: 1, pollinate: 'virágzáskor naponta finoman rázd meg a növényt (vagy ecsettel), hogy a pollen kihulljon – beltéren nincs szél/rovar, ami beporozná.', tip: 'Kacsozd; karó/kalitka kell; egyenletesen öntözd.' },
-      { k: 'pepper', n: 'Paprika', lat: 'Capsicum annuum', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'med', prune: 0, pollinate: 'virágzáskor naponta rázd meg finoman a növényt, vagy ecsettel segíts a beporzásban.', tip: 'Melegigényes, sok közvetlen napfény.' },
+      { k: 'tomato', n: 'Paradicsom', lat: 'Solanum lycopersicum', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [15, 30], tox: 0, diff: 'med', prune: 1, bloomMonths: [6, 8], pollinate: 'virágzáskor naponta finoman rázd meg a növényt (vagy ecsettel), hogy a pollen kihulljon – beltéren nincs szél/rovar, ami beporozná.', tip: 'Kacsozd; karó/kalitka kell; egyenletesen öntözd.' },
+      { k: 'pepper', n: 'Paprika', lat: 'Capsicum annuum', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'med', prune: 0, bloomMonths: [6, 8], pollinate: 'virágzáskor naponta rázd meg finoman a növényt, vagy ecsettel segíts a beporzásban.', tip: 'Melegigényes, sok közvetlen napfény.' },
       { k: 'chili', n: 'Chili', lat: 'Capsicum', c: 'veg', light: 'direct', w: 3, f: 14, r: 0, hum: 'med', temp: [18, 32], tox: 0, diff: 'med', prune: 0, tip: 'Minél melegebb, annál csípősebb.' },
-      { k: 'cucumber', n: 'Uborka', lat: 'Cucumis sativus', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'high', temp: [18, 30], tox: 0, diff: 'med', prune: 1, pollinate: 'beltéren ecsettel vidd át a pollent a hím virágról a nőkre (a nőin apró terméskezdemény van) – kivéve a partenokarp fajtákat.', tip: 'Sok víz és tápanyag; felfuttatható.' },
+      { k: 'cucumber', n: 'Uborka', lat: 'Cucumis sativus', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'high', temp: [18, 30], tox: 0, diff: 'med', prune: 1, bloomMonths: [6, 8], pollinate: 'beltéren ecsettel vidd át a pollent a hím virágról a nőkre (a nőin apró terméskezdemény van) – kivéve a partenokarp fajtákat.', tip: 'Sok víz és tápanyag; felfuttatható.' },
       { k: 'lettuce', n: 'Saláta', lat: 'Lactuca sativa', c: 'veg', light: 'bright', w: 2, f: 30, r: 0, hum: 'med', temp: [10, 22], tox: 0, diff: 'easy', prune: 0, tip: 'Hűvöskedvelő, gyorsan terem.' },
       { k: 'radish', n: 'Retek', lat: 'Raphanus sativus', c: 'veg', light: 'bright', w: 3, f: 0, r: 0, hum: 'med', temp: [10, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Nagyon gyors – 3–4 hét alatt kész.' },
       { k: 'carrot', n: 'Sárgarépa', lat: 'Daucus carota', c: 'veg', light: 'direct', w: 4, f: 30, r: 0, hum: 'low', temp: [10, 25], tox: 0, diff: 'easy', prune: 0, tip: 'Mély, laza, kőmentes talaj kell.' },
@@ -702,14 +707,15 @@
       { k: 'garlic', n: 'Fokhagyma', lat: 'Allium sativum', c: 'veg', light: 'bright', w: 5, f: 30, r: 0, hum: 'low', temp: [5, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Ősszel ültetve nyárra érik be.' },
       // — Gyümölcsök —
       { k: 'strawberry', n: 'Eper', lat: 'Fragaria', c: 'fruit', light: 'direct', w: 3, f: 21, r: 0, hum: 'med', temp: [12, 27], tox: 0, diff: 'easy', prune: 1, fertMonths: [4, 8], bloomMonths: [4, 6], overwinter: { temp: [0, 5], note: 'hidegigényes – télen vidd hűvös (0–5 °C), fagymentes helyre (pl. garázs), és alig öntözd; a hideg pihenő kell a tavaszi terméshez.' }, pollinate: 'beltéren virágzáskor puha ecsettel naponta porozd át a virágokat a szép, formás termésért.', tip: 'Indákat nevel; cserépben/ládában is jól terem.' },
-      { k: 'lemon', n: 'Citrom', lat: 'Citrus limon', c: 'fruit', light: 'direct', w: 5, f: 21, r: 36, hum: 'med', temp: [12, 30], tox: 0, diff: 'med', prune: 1, tip: 'Télen fagymentes, fényes hely; ne álljon vízben.' },
+      { k: 'lemon', n: 'Citrom', lat: 'Citrus limon', c: 'fruit', light: 'direct', w: 5, f: 21, r: 36, hum: 'med', temp: [12, 30], tox: 0, diff: 'med', prune: 1, fertMonths: [3, 9], bloomMonths: [4, 6], overwinter: { temp: [5, 12], note: 'fagyérzékeny – télen fagymentes, fényes, hűvös helyre vidd (5–12 °C, pl. télikert, hűvös szoba), és csak ritkán öntözd.' }, pollinate: 'beltéri virágzáskor puha ecsettel vidd át a pollent virágról virágra a terméskötéshez.', tip: 'Télen fagymentes, fényes hely; ne álljon vízben.' },
+      { k: 'pineapple', n: 'Ananász', lat: 'Ananas comosus', c: 'fruit', light: 'direct', w: 10, f: 30, r: 24, hum: 'med', temp: [16, 30], tox: 0, diff: 'med', prune: 0, overwinter: { temp: [15, 24], note: 'fagyérzékeny trópusi növény – egész télen tartsd bent, világos, meleg helyen (min. 15 °C), és csak ritkán, óvatosan öntözd.' }, tip: 'Broméliaféle: a leveles koronáját vízben/földben legyökereztetheted. A levéltölcsér közepébe is csurgathatsz kevés állott vizet; nem igényel kézi beporzást.' },
       { k: 'blueberry', n: 'Áfonya', lat: 'Vaccinium', c: 'fruit', light: 'bright', w: 3, f: 30, r: 36, hum: 'med', temp: [5, 26], tox: 0, diff: 'med', prune: 1, tip: 'Savanyú (tőzeges) talajt igényel.' },
       { k: 'raspberry', n: 'Málna', lat: 'Rubus idaeus', c: 'fruit', light: 'direct', w: 4, f: 30, r: 0, hum: 'med', temp: [5, 26], tox: 0, diff: 'med', prune: 2, tip: 'Termés után a régi vesszőt tőből vágd ki.' },
       { k: 'grape', n: 'Szőlő', lat: 'Vitis vinifera', c: 'fruit', light: 'direct', w: 7, f: 30, r: 0, hum: 'low', temp: [10, 32], tox: 0, diff: 'med', prune: 2, tip: 'A téli metszés elengedhetetlen a terméshez.' },
-      { k: 'fig', n: 'Füge', lat: 'Ficus carica', c: 'fruit', light: 'direct', w: 5, f: 30, r: 36, hum: 'low', temp: [8, 32], tox: 0, diff: 'med', prune: 1, tip: 'Napos, védett hely; télen pihenteted.' },
+      { k: 'fig', n: 'Füge', lat: 'Ficus carica', c: 'fruit', light: 'direct', w: 5, f: 30, r: 36, hum: 'low', temp: [8, 32], tox: 0, diff: 'med', prune: 1, overwinter: { temp: [0, 8], note: 'cserépben fagyérzékeny – télen vidd hűvös, fagymentes helyre (pl. garázs, pince); lombhullatás után alig igényel vizet.' }, tip: 'Napos, védett hely; télen pihenteted.' },
       // — Virágok —
       { k: 'orchid', n: 'Orchidea (Phalaenopsis)', lat: 'Phalaenopsis', c: 'flower', light: 'bright', w: 7, f: 14, r: 24, hum: 'high', temp: [18, 28], tox: 0, diff: 'med', prune: 0, tip: 'Áztatásos öntözés; átlátszó cserép a gyökérnek.' },
-      { k: 'geranium', n: 'Muskátli', lat: 'Pelargonium', c: 'flower', light: 'direct', w: 3, f: 14, r: 12, hum: 'low', temp: [10, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Sok virág sok fénynél; szárazságtűrő.' },
+      { k: 'geranium', n: 'Muskátli', lat: 'Pelargonium', c: 'flower', light: 'direct', w: 3, f: 14, r: 12, hum: 'low', temp: [10, 28], tox: 0, diff: 'easy', prune: 1, overwinter: { temp: [5, 10], note: 'fagyérzékeny – ősszel hozd be fagymentes, világos, hűvös helyre (5–10 °C), és csak ritkán öntözd; tavasszal a fagyok után viheted vissza.' }, tip: 'Sok virág sok fénynél; szárazságtűrő.' },
       { k: 'petunia', n: 'Petúnia', lat: 'Petunia', c: 'flower', light: 'direct', w: 2, f: 14, r: 0, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Az elnyílt virágokat csipkedd le.' },
       { k: 'cyclamen', n: 'Ciklámen', lat: 'Cyclamen persicum', c: 'flower', light: 'bright', w: 5, f: 21, r: 12, hum: 'med', temp: [10, 18], tox: 1, diff: 'med', prune: 0, tip: 'Hűvöskedvelő; alulról öntözd, a gumót ne.' },
       { k: 'poinsettia', n: 'Mikulásvirág', lat: 'Euphorbia pulcherrima', c: 'flower', light: 'bright', w: 6, f: 30, r: 0, hum: 'med', temp: [15, 24], tox: 1, diff: 'med', prune: 0, tip: 'Huzatra és hidegre érzékeny.' },
@@ -1024,6 +1030,17 @@
     const addDaysISO = (iso, n) => { const d = isoToDate(iso); d.setDate(d.getDate() + n); return dateToISO(d); };
     const daysBetween = (a, b) => Math.round((isoToDate(b) - isoToDate(a)) / 86400000);
 
+    // Cserép / föld segédek (leltár ↔ növény)
+    const numOf = v => { const n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : null; };
+    const parsePotDia = s => { const m = String(s || '').match(/(\d+([.,]\d+)?)/); return m ? numOf(m[1]) : null; };
+    function potLabel(pot) {
+      if (!pot) return '';
+      if (pot.dia && pot.ht) return `Ø${pot.dia}×${pot.ht} cm`;
+      if (pot.dia) return `Ø${pot.dia} cm`;
+      return pot.label || pot.size || '';
+    }
+    const potKey = pot => (pot && pot.dia) ? ('d' + Number(pot.dia) + 'h' + Number(pot.ht || 0)) : ('s' + ((pot && (pot.size || pot.label)) || ''));
+
     const hexToRgb = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
     const tint = (hex, a) => { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
 
@@ -1104,16 +1121,65 @@
       const t = isSucc(plant) ? { spring: 1, summer: 0.85, autumn: 1.8, winter: 4 } : { spring: 1, summer: 0.9, autumn: 1.35, winter: 1.9 };
       return t[s] || 1;
     }
+    /* ---- Időjárás (Open-Meteo) – kinti növényeknél az öntözési ciklust az időjárás is befolyásolja ---- */
+    const WEATHER = { byLoc: {} };                       // { locKey: { fetched, lat, lon, daily, factor, summary, emoji } }
+    const weatherLocKey = s => (s || '').trim().toLowerCase();
+    function weatherFor(plant) {
+      if ((plant.placement || 'indoor') !== 'outdoor') return null;     // beltéri növényt nem érdekli az időjárás
+      const key = weatherLocKey(plant.city);
+      if (!key) return null;
+      return WEATHER.byLoc[key] || null;
+    }
+    function weatherFactorFor(plant) { const w = weatherFor(plant); return (w && w.factor) ? w.factor : 1; }
+    function computeWeatherFactor(daily) {
+      const today = todayISO();
+      const idx = daily.findIndex(d => d.date === today);
+      if (idx < 0) return null;
+      const prev = daily.slice(Math.max(0, idx - 2), idx);            // előző 1–2 nap
+      const next = daily.slice(idx, idx + 4);                         // ma + 3 nap (4 napos előrejelzés)
+      const recentRain = prev.reduce((a, d) => a + (d.precip || 0), 0) + (next[0] ? (next[0].precip || 0) : 0);
+      const comingRain = next.slice(1).reduce((a, d) => a + (d.precip || 0), 0);
+      const hotDry = next.filter(d => (d.tmax != null && d.tmax >= 28) && (d.precip || 0) < 2).length;
+      let factor = 1; const parts = []; let emoji = '🌤️';
+      if (recentRain >= 8) { factor *= 1.7; parts.push('sok eső esett (' + Math.round(recentRain) + ' mm) – az öntözés jórészt elintézve'); emoji = '🌧️'; }
+      else if (recentRain >= 3) { factor *= 1.3; parts.push('esett egy kis eső (' + Math.round(recentRain) + ' mm) – ráérsz az öntözéssel'); emoji = '🌦️'; }
+      if (hotDry >= 2) { factor *= 0.65; parts.push('forró, száraz napok jönnek – öntözz sűrűbben'); emoji = '☀️'; }
+      else if (hotDry === 1) { factor *= 0.82; parts.push('meleg, száraz nap várható'); if (emoji === '🌤️') emoji = '☀️'; }
+      if (comingRain >= 6 && recentRain < 8) { factor *= 1.15; parts.push('eső jön a következő napokban'); if (emoji === '🌤️') emoji = '🌦️'; }
+      factor = Math.max(0.5, Math.min(2.2, factor));
+      return { factor, summary: parts.length ? (parts.join('; ') + '.') : 'szokásos időjárás, az ütemezés változatlan.', emoji };
+    }
+    async function fetchWeatherFor(city) {
+      const key = weatherLocKey(city); if (!key) return;
+      const cached = WEATHER.byLoc[key];
+      if (cached && cached.fetched && (Date.now() - cached.fetched) < 3 * 3600 * 1000) return; // 3 órás cache
+      try {
+        let lat = cached && cached.lat, lon = cached && cached.lon, label = cached && cached.label;
+        if (lat == null) {
+          const g = await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=hu&name=' + encodeURIComponent(city)).then(r => r.json());
+          const hit = g && g.results && g.results[0];
+          if (!hit) { WEATHER.byLoc[key] = { fetched: Date.now(), factor: 1, summary: 'ismeretlen település – ellenőrizd a nevét.', emoji: '❓' }; return; }
+          lat = hit.latitude; lon = hit.longitude; label = hit.name + (hit.admin1 ? ', ' + hit.admin1 : '');
+        }
+        const f = await fetch('https://api.open-meteo.com/v1/forecast?timezone=auto&past_days=2&forecast_days=4&daily=temperature_2m_max,precipitation_sum,precipitation_probability_max&latitude=' + lat + '&longitude=' + lon).then(r => r.json());
+        const dl = f && f.daily; if (!dl || !dl.time) return;
+        const daily = dl.time.map((t, i) => ({ date: t, tmax: dl.temperature_2m_max[i], precip: dl.precipitation_sum[i], pprob: dl.precipitation_probability_max ? dl.precipitation_probability_max[i] : null }));
+        const calc = computeWeatherFactor(daily) || { factor: 1, summary: '', emoji: '🌤️' };
+        WEATHER.byLoc[key] = { fetched: Date.now(), lat, lon, label, daily, ...calc };
+      } catch (e) { /* offline / hiba – marad a korábbi vagy az alap ütemezés */ }
+    }
+
     function waterInfo(plant, events) {
       const base = plant.waterIntervalDays;
       const last = lastOfType(events, plant.id, 'water');
-      if (!base || !last) return { state: 'none', last, due: null, daysUntil: null, interval: base || 0, season: seasonNow() };
+      if (!base || !last) return { state: 'none', last, due: null, daysUntil: null, interval: base || 0, season: seasonNow(), weather: weatherFor(plant) };
       const s = seasonOf(last);
-      const interval = Math.max(1, Math.round(base * waterMult(plant, s)));
+      const wf = weatherFactorFor(plant);
+      const interval = Math.max(1, Math.round(base * waterMult(plant, s) * wf));
       const due = addDaysISO(last, interval);
       const daysUntil = daysBetween(todayISO(), due);
       let state = 'ok'; if (daysUntil < 0) state = 'overdue'; else if (daysUntil === 0) state = 'due'; else if (daysUntil <= 2) state = 'soon';
-      return { state, last, due, daysUntil, interval, season: s };
+      return { state, last, due, daysUntil, interval, season: s, weather: weatherFor(plant) };
     }
     const fertMonthsOf = plant => { const sp = spOf(plant); return (sp && sp.fertMonths) || [3, 9]; };
     function clampToFertSeason(iso, sm, em) {
@@ -1181,25 +1247,81 @@
       } catch (e) {}
     }
 
-    // Egy adott napra előrejelzett, ütemezett teendők (jövőbeli öntözés/tápoldat a növény ritmusa alapján)
+    /* ---- Évszakos költöztetés (áttelelés / kihelyezés) + kézi beporzás ---- */
+    // Csak az áttelelést igénylő fajoknál (overwinter) jelez költöztetést – így nem ad téves tanácsot az egynyáriakra.
+    function moveRulesFor(plant) {
+      const sp = spOf(plant);
+      if (!sp || !sp.overwinter) return [];
+      const ow = sp.overwinter;
+      return [
+        { dir: 'in',  m: 10, d: 25, short: 'Vidd a téli pihenőhelyére', where: ow.note },
+        { dir: 'out', m: 4,  d: 15, short: 'Viheted vissza a helyére',  where: 'vidd vissza a megszokott, világos helyére (erkély / kert / napos ablak), miután elmúltak a tavaszi fagyok.' },
+      ];
+    }
+    const moveDateISO = (r, year) => `${year}-${pad(r.m)}-${pad(r.d)}`;
+    const moveDone = (events, plantId, dateISO) => events.some(e => e.plantId === plantId && e.type === 'move' && Math.abs(daysBetween(dateISO, e.date)) <= 12);
+    function moveTasksForDay(plants, events, iso) {
+      const y = isoToDate(iso).getFullYear();
+      const out = [];
+      for (const p of plants) for (const r of moveRulesFor(p)) {
+        if (moveDateISO(r, y) !== iso) continue;
+        if (!moveDone(events, p.id, iso)) out.push({ plant: p, type: 'move', info: r.short + ': ' + r.where, dir: r.dir });
+      }
+      return out;
+    }
+    // A következő esedékes költöztetés egy növényre (a megadott napablakban), ha még nincs rögzítve
+    function nextMoveWithin(plant, events, fromDays, toDays) {
+      const rules = moveRulesFor(plant); if (!rules.length) return null;
+      const today = todayISO(); const yNow = isoToDate(today).getFullYear();
+      const cands = [];
+      for (const yy of [yNow, yNow + 1]) for (const r of rules) {
+        const date = moveDateISO(r, yy); const dd = daysBetween(today, date);
+        if (dd < fromDays || dd > toDays) continue;
+        if (moveDone(events, plant.id, date)) continue;
+        cands.push({ date, dd, short: r.short, where: r.where, dir: r.dir });
+      }
+      cands.sort((a, b) => a.dd - b.dd);
+      return cands[0] || null;
+    }
+    // Kézi beporzás: csak beltéri, beporzást igénylő fajnál, a virágzási hónapokban
+    function inBloom(plant, iso) {
+      const sp = spOf(plant);
+      if (!sp || !sp.pollinate || (plant.placement || 'indoor') !== 'indoor' || !sp.bloomMonths) return false;
+      const [a, b] = sp.bloomMonths, m = isoToDate(iso).getMonth() + 1;
+      return a <= b ? (m >= a && m <= b) : (m >= a || m <= b);
+    }
+    function pollinateTasksForDay(plants, events, iso) {
+      const out = [];
+      for (const p of plants) if (inBloom(p, iso) && isoToDate(iso).getDate() % 2 === 1) out.push({ plant: p, type: 'pollinate', info: spOf(p).pollinate });
+      return out;
+    }
+    function pollinateActive(plant, events) {
+      const today = todayISO();
+      if (!inBloom(plant, today)) return null;
+      const last = lastOfType(events, plant.id, 'pollinate');
+      if (last && daysBetween(last, today) < 2) return null;
+      return { how: spOf(plant).pollinate };
+    }
+
+    // Egy adott napra előrejelzett teendők: öntözés (évszak + időjárás), tápoldat, költöztetés, beporzás
     function tasksForDay(plants, events, iso) {
       const out = [];
       for (const p of plants) {
-        // Öntözés: szezonális intervallummal (a legutóbbi öntözés évszaka szerint – télen ritkábban)
         if (p.waterIntervalDays) {
           const last = lastOfType(events, p.id, 'water');
           if (last) {
-            const eff = Math.max(1, Math.round(p.waterIntervalDays * waterMult(p, seasonOf(last))));
+            const eff = Math.max(1, Math.round(p.waterIntervalDays * waterMult(p, seasonOf(last)) * weatherFactorFor(p)));
             const diff = daysBetween(last, iso);
             if (diff > 0 && diff % eff === 0) out.push({ plant: p, type: 'water' });
           }
         }
-        // Tápoldat: a szezonális következő esedékesség (télen a tavaszi dátumra esik)
         if (p.fertilizeIntervalDays) {
           const f = fertInfo(p, events);
           if (f.due === iso) out.push({ plant: p, type: 'fertilize' });
         }
       }
+      out.push(...moveTasksForDay(plants, events, iso));
+      out.push(...pollinateTasksForDay(plants, events, iso));
       return out;
     }
 
@@ -1273,6 +1395,7 @@
     function StoreProvider({ children }) {
       const [data, setData] = useState(loadData);
       const [toasts, setToasts] = useState([]);
+      const [weatherVersion, setWeatherVersion] = useState(0);
       const dataRef = useRef(data);
       dataRef.current = data;
       const ready = useRef(false);
@@ -1335,6 +1458,22 @@
         return () => { dead = true; document.removeEventListener('visibilitychange', onVis); };
       }, []);
 
+      // Időjárás lekérése a KINTI növények településeihez (minden belépéskor + előtérbe kerüléskor)
+      const outdoorCities = useMemo(
+        () => [...new Set(data.plants.filter(p => p.placement === 'outdoor' && p.city && p.city.trim()).map(p => p.city.trim()))].join('|'),
+        [data.plants]
+      );
+      useEffect(() => {
+        const cities = outdoorCities ? outdoorCities.split('|') : [];
+        if (!cities.length) return;
+        let dead = false;
+        const run = () => Promise.all(cities.map(fetchWeatherFor)).then(() => { if (!dead) setWeatherVersion(v => v + 1); });
+        run();
+        const onVis = () => { if (document.visibilityState === 'visible') run(); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { dead = true; document.removeEventListener('visibilitychange', onVis); };
+      }, [outdoorCities]);
+
       // feloldott téma
       const resolvedTheme = useMemo(() => {
         const t = data.settings.theme;
@@ -1376,12 +1515,49 @@
         addInv(item) { const it = { id: uid(), ...item }; setData(d => ({ ...d, inventory: [...(d.inventory || []), it] })); return it; },
         updateInv(id, patch) { setData(d => ({ ...d, inventory: (d.inventory || []).map(i => i.id === id ? { ...i, ...patch } : i) })); },
         deleteInv(id) { setData(d => ({ ...d, inventory: (d.inventory || []).filter(i => i.id !== id) })); },
+        // Felhasznált cserép/kaspó (−1 db) és föld (−liter) levonása a leltárból
+        consumeInv({ potInvId, planterInvId, soilInvId, soilL }) {
+          setData(d => ({
+            ...d, inventory: (d.inventory || []).map(i => {
+              if (potInvId && i.id === potInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
+              if (planterInvId && i.id === planterInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
+              if (soilInvId && i.id === soilInvId && soilL) return { ...i, qty: Math.max(0, Math.round(((Number(i.qty) || 0) - Number(soilL)) * 10) / 10) };
+              return i;
+            }),
+          }));
+        },
+        // Átültetéskor a felszabadult régi cserép visszakerül a leltárba (+1 db)
+        returnPotToInv(pot) {
+          if (!pot || (!pot.dia && !pot.label && !pot.size)) return;
+          setData(d => {
+            const inv = (d.inventory || []).slice();
+            if (pot.invId) { const i = inv.findIndex(x => x.id === pot.invId); if (i >= 0) { inv[i] = { ...inv[i], qty: (Number(inv[i].qty) || 0) + 1 }; return { ...d, inventory: inv }; } }
+            const mi = inv.findIndex(x => x.cat === 'pot' && potKey(x) === potKey(pot) && potKey(pot) !== 's');
+            if (mi >= 0) inv[mi] = { ...inv[mi], qty: (Number(inv[mi].qty) || 0) + 1 };
+            else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', dia: pot.dia || '', ht: pot.ht || '', size: pot.dia ? '' : (pot.label || pot.size || ''), qty: 1, unit: 'db', notes: 'átültetéskor felszabadult' });
+            return { ...d, inventory: inv };
+          });
+        },
+        // A jelenlegi növények cserepeinek felvétele a leltárba (utólag módosítható)
+        seedPotsFromPlants() {
+          setData(d => {
+            const inv = (d.inventory || []).slice();
+            (d.plants || []).forEach(p => {
+              const pot = (p.pot && (p.pot.dia || p.pot.label)) ? p.pot : (p.potSize ? { dia: parsePotDia(p.potSize), size: p.potSize } : null);
+              if (!pot) return;
+              const mi = inv.findIndex(x => x.cat === 'pot' && potKey(x) === potKey(pot));
+              if (mi >= 0) inv[mi] = { ...inv[mi], qty: (Number(inv[mi].qty) || 0) + 1 };
+              else inv.push({ id: uid(), cat: 'pot', name: 'Cserép', dia: (pot.dia || ''), ht: (pot.ht || ''), size: pot.dia ? '' : (pot.size || pot.label || ''), qty: 1, unit: 'db', notes: 'jelenlegi növényből' });
+            });
+            return { ...d, inventory: inv };
+          });
+        },
         importData(obj) { setData({ ...defaultData(), ...obj, settings: { ...defaultData().settings, ...(obj.settings || {}) } }); },
         resetData() { try { localStorage.removeItem(LS_KEY); } catch (e) {} try { idbSet('fulldata', defaultData()); } catch (e) {} setData(defaultData()); },
         setAll(d) { setData(d); },
       }), []);
 
-      const value = { data, ...actions, toast, resolvedTheme };
+      const value = { data, ...actions, toast, resolvedTheme, weatherVersion };
       return (
         <Store.Provider value={value}>
           {children}
@@ -1455,14 +1631,16 @@
 
     /* ============================ DASHBOARD ============================ */
     function Dashboard({ go, openPlant, quickLog }) {
-      const { data, addEvent, toast } = useStore();
+      const { data, addEvent, toast, weatherVersion } = useStore();
       const { plants, events } = data;
       const hour = new Date().getHours();
       const greet = hour < 10 ? 'Jó reggelt' : hour < 18 ? 'Szép napot' : 'Szép estét';
 
-      const withInfo = useMemo(() => plants.map(p => ({ p, w: waterInfo(p, events) })), [plants, events]);
+      const withInfo = useMemo(() => plants.map(p => ({ p, w: waterInfo(p, events) })), [plants, events, weatherVersion]);
       const due = withInfo.filter(x => x.w.state === 'overdue' || x.w.state === 'due').sort((a, b) => urgencyKey(a.w) - urgencyKey(b.w));
       const soon = withInfo.filter(x => x.w.state === 'soon').sort((a, b) => urgencyKey(a.w) - urgencyKey(b.w));
+      const moveSoon = plants.map(p => { const m = nextMoveWithin(p, events, -10, 21); return m ? { p, ...m } : null; }).filter(Boolean).sort((a, b) => a.dd - b.dd);
+      const pollSoon = plants.map(p => { const x = pollinateActive(p, events); return x ? { p, ...x } : null; }).filter(Boolean);
 
       const weekStart = addDaysISO(todayISO(), -6);
       const weekCount = events.filter(e => e.date >= weekStart).length;
@@ -1524,6 +1702,37 @@
                         <div className="muted" style={{ fontSize: 12.5 }}>{ET.water.emoji} {waterPillText(w)}</div>
                       </div>
                       <Icon name="chevR" size={18} className="muted-3" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {moveSoon.length > 0 && (
+                <div style={{ marginTop: 22 }}>
+                  <div className="sec-title" style={{ marginBottom: 12 }}>🚚 Költöztetés / áttelelés</div>
+                  {moveSoon.map(({ p, date, short, dd }) => (
+                    <div className="due-row" key={p.id + date}>
+                      <PlantThumb plant={p} size={46} radius={13} />
+                      <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => openPlant(p.id)}>
+                        <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                        <div className="muted" style={{ fontSize: 12.5 }}><b style={{ color: dd <= 0 ? 'var(--due)' : 'var(--soon)' }}>{relDay(date)}</b> · {short.toLowerCase()}</div>
+                      </div>
+                      <button className="btn btn-soft btn-sm" style={{ flexShrink: 0 }} onClick={() => { addEvent({ plantId: p.id, type: 'move', note: short }); toast(`${p.name} ${ET.move.verb}`, ET.move.emoji); }}><Icon name="check" size={15} />Kész</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {pollSoon.length > 0 && (
+                <div style={{ marginTop: 22 }}>
+                  <div className="sec-title" style={{ marginBottom: 12 }}>🖌️ Kézi beporzás</div>
+                  {pollSoon.map(({ p }) => (
+                    <div className="due-row" key={p.id}>
+                      <PlantThumb plant={p} size={46} radius={13} />
+                      <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => openPlant(p.id)}>
+                        <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                        <div className="muted" style={{ fontSize: 12.5 }}>virágzik – ma porozd be kézzel</div>
+                      </div>
+                      <button className="btn btn-soft btn-sm" style={{ flexShrink: 0 }} onClick={() => { addEvent({ plantId: p.id, type: 'pollinate' }); toast(`${p.name} ${ET.pollinate.verb}`, ET.pollinate.emoji); }}><Icon name="check" size={15} />Kész</button>
                     </div>
                   ))}
                 </div>
@@ -1598,7 +1807,7 @@
 
     /* ============================ NÖVÉNYEK ============================ */
     function PlantsList({ openPlant, quickLog }) {
-      const { data, addEvent, toast } = useStore();
+      const { data, addEvent, toast, weatherVersion } = useStore();
       const { plants, events } = data;
       const [q, setQ] = useState('');
       const [sort, setSort] = useState('urgency');
@@ -1613,7 +1822,7 @@
         if (sort === 'name') arr.sort((a, b) => a.p.name.localeCompare(b.p.name, 'hu'));
         if (sort === 'recent') arr.sort((a, b) => (b.p.createdAt || '').localeCompare(a.p.createdAt || ''));
         return arr;
-      }, [plants, events, q, sort, filter]);
+      }, [plants, events, q, sort, filter, weatherVersion]);
 
       if (plants.length === 0) return <FirstRun go={() => quickLog()} />;
 
@@ -1666,6 +1875,8 @@
     function PlantCard({ plant, w, f, idx, onOpen, onWater, onMore }) {
       const wc = STATE_META[w.state].color;
       const fc = STATE_META[(f && f.state) || 'none'].color;
+      const sp = spOf(plant);
+      const common = sp ? sp.n : (plant.species || '');   // magyar köznapi fajtanév (pl. Eper, Alma, Ananász) – nem a latin
       return (
         <div className="pcard" style={{ animationDelay: (idx * 0.04) + 's' }}>
           <div className="pcard-photo" onClick={onOpen}>
@@ -1676,7 +1887,7 @@
           <div className="pcard-body">
             <div onClick={onOpen}>
               <div className="pcard-name">{plant.favorite && <span style={{ color: 'var(--soon)' }}>★ </span>}{plant.name}</div>
-              {plant.species && <div className="pcard-species">{plant.species}</div>}
+              {common && common !== plant.name && <div className="pcard-species">{common}</div>}
             </div>
             <div className="pcard-meta">
               <Icon name="drop" size={13} style={{ color: 'var(--water)' }} />
@@ -1692,15 +1903,18 @@
     }
 
     /* ============================ NÖVÉNY RÉSZLETEK ============================ */
-    function PlantDetail({ plantId, back, edit, editEvent, logFor }) {
-      const { data, addEvent, deleteEvent, toggleFav, toast } = useStore();
+    function PlantDetail({ plantId, back, edit, editEvent, logFor, repot }) {
+      const { data, addEvent, deleteEvent, toggleFav, toast, weatherVersion } = useStore();
       const plant = data.plants.find(p => p.id === plantId);
       const events = useMemo(() => data.events.filter(e => e.plantId === plantId).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)), [data.events, plantId]);
       if (!plant) { back(); return null; }
 
       const sp = plant.speciesKey ? SP_BY_KEY[plant.speciesKey] : null;
+      const common = sp ? sp.n : (plant.species || '');
       const w = waterInfo(plant, data.events);
       const f = fertInfo(plant, data.events);
+      const nextMove = nextMoveWithin(plant, data.events, -14, 30);
+      const pollNow = pollinateActive(plant, data.events);
       const waterEvents = data.events.filter(e => e.plantId === plantId && e.type === 'water').map(e => e.date).sort();
       const gaps = waterEvents.slice(1).map((d, i) => daysBetween(waterEvents[i], d));
       const avgGap = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : null;
@@ -1733,11 +1947,13 @@
             <div className="hero-photo">{plant.photo ? <img src={plant.photo} alt={plant.name} /> : <Icon name="leaf" size={42} />}</div>
             <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
               <h1 className="h1" style={{ fontSize: 24 }}>{plant.name}</h1>
-              {plant.species && <div className="muted" style={{ fontStyle: 'italic', fontSize: 14, marginTop: 1 }}>{plant.species}</div>}
+              {common && common !== plant.name && <div className="muted" style={{ fontSize: 14.5, fontWeight: 600, marginTop: 1 }}>{common}</div>}
               <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
+                <span className="info-chip">{(plant.placement || 'indoor') === 'outdoor' ? '🌳 Kint' : '🏠 Bent'}</span>
                 {plant.location && <span className="info-chip"><Icon name="pin" size={13} />{plant.location}</span>}
+                {(plant.placement === 'outdoor' && plant.city) && <span className="info-chip">📍 {plant.city}</span>}
                 {plant.light && <span className="info-chip">{LIGHT[plant.light].emoji} {LIGHT[plant.light].label.split(',')[0].split(' / ')[0]}</span>}
-                {plant.potSize && <span className="info-chip">🪴 {plant.potSize}</span>}
+                {(potLabel(plant.pot) || plant.potSize) && <span className="info-chip">🪴 {potLabel(plant.pot) || plant.potSize}</span>}
               </div>
             </div>
           </div>
@@ -1754,6 +1970,33 @@
               <div className="muted-3" style={{ fontSize: 12, marginTop: 3 }}>{plant.fertilizeIntervalDays ? (f.offSeason ? 'Téli pihenő – tavasszal' : `${plant.fertilizeIntervalDays} naponta`) : '—'}</div>
             </div>
           </div>
+
+          {w.weather && w.weather.summary && (
+            <div className="care-card" style={{ marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{w.weather.emoji}</span>
+              <div style={{ fontSize: 13.5, lineHeight: 1.45 }}><b>Időjárás{w.weather.label ? ' · ' + w.weather.label : ''}:</b> {w.weather.summary}</div>
+            </div>
+          )}
+          {nextMove && (
+            <div className="care-card" style={{ marginBottom: 14, borderColor: 'var(--soon)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>🚚</span>
+              <div style={{ fontSize: 13.5, lineHeight: 1.45, flex: 1 }}>
+                <b>{nextMove.short} · {relDay(nextMove.date)}:</b> {nextMove.where}
+                <div style={{ marginTop: 8 }}><button className="btn btn-soft btn-sm" onClick={() => { addEvent({ plantId, type: 'move', note: nextMove.short }); toast(`${plant.name} ${ET.move.verb}`, ET.move.emoji); }}><Icon name="check" size={15} />Megcsináltam</button></div>
+              </div>
+            </div>
+          )}
+          {pollNow && (
+            <div className="care-card" style={{ marginBottom: 14, borderColor: '#db2777', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>🖌️</span>
+              <div style={{ fontSize: 13.5, lineHeight: 1.45, flex: 1 }}>
+                <b>Kézi beporzás esedékes:</b> {pollNow.how}
+                <div style={{ marginTop: 8 }}><button className="btn btn-soft btn-sm" onClick={() => { addEvent({ plantId, type: 'pollinate' }); toast(`${plant.name} ${ET.pollinate.verb}`, ET.pollinate.emoji); }}><Icon name="check" size={15} />Beporoztam</button></div>
+              </div>
+            </div>
+          )}
+
+          <button className="btn btn-ghost btn-block" style={{ marginBottom: 22 }} onClick={() => repot(plantId)}>🪴 Átültetés / cserépcsere</button>
 
           {sp && (
             <div style={{ marginBottom: 22 }}>
@@ -1834,7 +2077,7 @@
 
     /* ============================ NAPTÁR ============================ */
     function CalendarView({ openPlant, openDay }) {
-      const { data } = useStore();
+      const { data, weatherVersion } = useStore();
       const today = new Date();
       const [ym, setYm] = useState({ y: today.getFullYear(), m: today.getMonth() });
 
@@ -1854,7 +2097,7 @@
           if (p.waterIntervalDays) {
             const last = lastOfType(data.events, p.id, 'water');
             if (last) {
-              const eff = Math.max(1, Math.round(p.waterIntervalDays * waterMult(p, seasonOf(last))));
+              const eff = Math.max(1, Math.round(p.waterIntervalDays * waterMult(p, seasonOf(last)) * weatherFactorFor(p)));
               let n = Math.ceil(daysBetween(last, from) / eff); if (n < 1) n = 1;
               let d = addDaysISO(last, n * eff), guard = 0;
               while (d.startsWith(monthPrefix) && guard < 60) { (map[d] = map[d] || new Set()).add('water'); d = addDaysISO(d, eff); guard++; }
@@ -1865,8 +2108,16 @@
             if (fd && fd.startsWith(monthPrefix) && fd >= today) (map[fd] = map[fd] || new Set()).add('fertilize');
           }
         });
+        // Költöztetés (áttelelés) + kézi beporzás a hónap jövőbeli napjaira
+        const dim = new Date(ym.y, ym.m + 1, 0).getDate();
+        for (let dd = 1; dd <= dim; dd++) {
+          const iso = `${monthPrefix}-${pad(dd)}`;
+          if (iso < today) continue;
+          if (moveTasksForDay(data.plants, data.events, iso).length) (map[iso] = map[iso] || new Set()).add('move');
+          if (pollinateTasksForDay(data.plants, data.events, iso).length) (map[iso] = map[iso] || new Set()).add('pollinate');
+        }
         return map;
-      }, [data.plants, data.events, ym]);
+      }, [data.plants, data.events, ym, weatherVersion]);
 
       const first = new Date(ym.y, ym.m, 1);
       const startDow = (first.getDay() + 6) % 7; // hétfő = 0
@@ -2090,14 +2341,9 @@
         <div className="anim-page">
           <h1 className="h1" style={{ marginBottom: 18 }}>Beállítások</h1>
 
-          <button className="action-item" style={{ marginBottom: 10 }} onClick={openKB}>
+          <button className="action-item" style={{ marginBottom: 22 }} onClick={openKB}>
             <div className="action-ic" style={{ background: tint('#16a34a', .14), color: '#16a34a' }}>📖</div>
             <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 700 }}>Tudástár</div><div className="muted" style={{ fontSize: 13 }}>{PLANT_DB.length} növény gondozási útmutatóval</div></div>
-            <Icon name="chevR" size={18} className="muted-3" />
-          </button>
-          <button className="action-item" style={{ marginBottom: 22 }} onClick={openInv}>
-            <div className="action-ic" style={{ background: tint('#c2410c', .14), color: '#c2410c' }}>📦</div>
-            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 700 }}>Kertészeti leltár</div><div className="muted" style={{ fontSize: 13 }}>{(data.inventory || []).length} tétel · cserepek, földek, eszközök</div></div>
             <Icon name="chevR" size={18} className="muted-3" />
           </button>
 
@@ -2124,7 +2370,12 @@
               {KIT_TOOLS.map(p => <button key={p.key} className={cls('kit-chip', kitTools[p.key] && 'on')} onClick={() => toggleKit('tools', p.key)}>{p.emoji} {p.label}</button>)}
             </div>
           </div>
-          <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 22, padding: '0 4px' }}>Ezek alapján a növényeknél személyre szabott gondozási tippeket kapsz – mit, mivel és mikor érdemes csinálni.</div>
+          <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12, padding: '0 4px' }}>Ezek alapján a növényeknél személyre szabott gondozási tippeket kapsz – mit, mivel és mikor érdemes csinálni.</div>
+          <button className="action-item" style={{ marginBottom: 22 }} onClick={openInv}>
+            <div className="action-ic" style={{ background: tint('#c2410c', .14), color: '#c2410c' }}>📦</div>
+            <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 700 }}>Kertészeti leltár</div><div className="muted" style={{ fontSize: 13 }}>{(data.inventory || []).length} tétel · cserepek, földek, kaspók, eszközök</div></div>
+            <Icon name="chevR" size={18} className="muted-3" />
+          </button>
 
           <div className="sec-title" style={{ marginBottom: 11 }}>Értesítések</div>
           <div className="card" style={{ marginBottom: 14 }}>
@@ -2217,9 +2468,15 @@
 
     /* ============================ NÖVÉNY ŰRLAP ============================ */
     function PlantForm({ plantId, close }) {
-      const { data, addPlant, updatePlant, deletePlant, toast } = useStore();
+      const { data, addPlant, updatePlant, deletePlant, consumeInv, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
-      const [form, setForm] = useState(() => editing || { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', light: 'bright', potSize: '', soil: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+      const [form, setForm] = useState(() => editing
+        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, deductInv: false, city: editing.city || '', potDia: (editing.pot && editing.pot.dia) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
+        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potDia: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilInvId: null, planter: '', planterInvId: null, deductInv: true, photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+      const inv = data.inventory || [];
+      const invPots = inv.filter(i => i.cat === 'pot');
+      const invSoils = inv.filter(i => i.cat === 'soil');
+      const invPlanters = inv.filter(i => i.cat === 'planter');
       const [busy, setBusy] = useState(false);
       const [confirmDel, setConfirmDel] = useState(false);
       const [spQuery, setSpQuery] = useState('');
@@ -2249,8 +2506,19 @@
 
       const save = () => {
         if (!form.name.trim()) { toast('Adj nevet a növénynek', '🌱'); return; }
-        if (editing) { updatePlant(editing.id, form); toast('Mentve', '✅'); }
-        else { addPlant(form); toast('Növény hozzáadva', '🌿'); }
+        const pot = (form.potDia || form.potHt)
+          ? { dia: form.potDia ? Number(form.potDia) : '', ht: form.potHt ? Number(form.potHt) : '', invId: form.potInvId || null }
+          : ((editing && editing.pot) || null);
+        const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: form.soilUsedL ? Number(form.soilUsedL) : null };
+        ['potDia', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'deductInv'].forEach(k => delete payload[k]);
+        if (editing) { updatePlant(editing.id, payload); toast('Mentve', '✅'); }
+        else {
+          addPlant(payload);
+          if (form.deductInv && (form.potInvId || form.planterInvId || (form.soilInvId && form.soilUsedL))) {
+            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, soilInvId: form.soilInvId, soilL: form.soilUsedL });
+          }
+          toast('Növény hozzáadva', '🌿');
+        }
         close();
       };
 
@@ -2317,10 +2585,7 @@
           <div style={{ height: 16 }} />
           <div className="field"><label>Név *</label><input className="input" value={form.name} placeholder="pl. Monstera a nappaliban" onChange={e => set('name', e.target.value)} /></div>
           <div className="field"><label>Faj / fajta</label><input className="input" value={form.species} placeholder="pl. Monstera deliciosa" onChange={e => set('species', e.target.value)} /></div>
-          <div className="field-row">
-            <div className="field"><label>Helyszín</label><input className="input" value={form.location} placeholder="pl. Nappali" onChange={e => set('location', e.target.value)} /></div>
-            <div className="field"><label>Cserép mérete</label><input className="input" value={form.potSize} placeholder="pl. 18 cm" onChange={e => set('potSize', e.target.value)} /></div>
-          </div>
+          <div className="field"><label>Helyszín <span className="muted-3" style={{ fontWeight: 600 }}>· szoba / sarok</span></label><input className="input" value={form.location} placeholder="pl. Nappali, déli ablak" onChange={e => set('location', e.target.value)} /></div>
           <div className="field">
             <label>Tárolás · hol tartod</label>
             <div className="preset-row">
@@ -2329,6 +2594,12 @@
               ))}
             </div>
           </div>
+          {form.placement === 'outdoor' && (
+            <div className="field">
+              <label>📍 Település <span className="muted-3" style={{ fontWeight: 600 }}>· időjárás-alapú öntözéshez</span></label>
+              <input className="input" value={form.city} placeholder="pl. Szeged, Gödöllő, a falud neve…" onChange={e => set('city', e.target.value)} />
+            </div>
+          )}
           <div className="field">
             <label>Fényigény</label>
             <select className="select" value={form.light} onChange={e => set('light', e.target.value)}>
@@ -2348,7 +2619,63 @@
               {FERT_PRESETS.map(d => <button key={d} className={cls('preset', form.fertilizeIntervalDays === d && 'on')} onClick={() => set('fertilizeIntervalDays', d)}>{d === 0 ? 'Nincs' : d + ' nap'}</button>)}
             </div>
           </div>
-          <div className="field"><label>Talaj</label><input className="input" value={form.soil} placeholder="pl. Univerzális + perlit" onChange={e => set('soil', e.target.value)} /></div>
+          <div className="sec-title" style={{ margin: '2px 0 10px' }}>🪴 Cserép és föld</div>
+          <div className="care-card" style={{ marginBottom: 16 }}>
+            {invPots.length > 0 && (
+              <div className="field" style={{ marginBottom: 12 }}>
+                <label>Cserép a leltárból</label>
+                <select className="select" value={form.potInvId || ''} onChange={e => {
+                  const it = invPots.find(x => x.id === e.target.value);
+                  if (it) setForm(f => ({ ...f, potInvId: it.id, potDia: it.dia || '', potHt: it.ht || '' }));
+                  else setForm(f => ({ ...f, potInvId: null }));
+                }}>
+                  <option value="">— egyéni méret megadása —</option>
+                  {invPots.map(it => <option key={it.id} value={it.id}>{potLabel(it) || it.name}{it.qty != null ? ` · ${it.qty} db raktáron` : ''}</option>)}
+                </select>
+              </div>
+            )}
+            <div className="field-row">
+              <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potDia} placeholder="pl. 18" onChange={e => set('potDia', e.target.value)} /></div>
+              <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potHt} placeholder="pl. 16" onChange={e => set('potHt', e.target.value)} /></div>
+            </div>
+            <div className="field" style={{ margin: '12px 0 0' }}>
+              <label>Föld / közeg</label>
+              {invSoils.length > 0 && (
+                <select className="select" style={{ marginBottom: 8 }} value={form.soilInvId || ''} onChange={e => {
+                  const it = invSoils.find(x => x.id === e.target.value);
+                  setForm(f => ({ ...f, soilInvId: it ? it.id : null, soil: it ? (it.name + (it.size ? ' (' + it.size + ')' : '')) : f.soil }));
+                }}>
+                  <option value="">— leltárból / egyéni —</option>
+                  {invSoils.map(it => <option key={it.id} value={it.id}>{it.name}{it.qty != null ? ` · ${it.qty} ${it.unit || 'l'} raktáron` : ''}</option>)}
+                </select>
+              )}
+              <input className="input" value={form.soil} placeholder="pl. Univerzális virágföld + perlit" onChange={e => set('soil', e.target.value)} />
+            </div>
+            <div className="field-row" style={{ marginTop: 12 }}>
+              <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált föld (l)</label><input className="input" type="number" inputMode="decimal" value={form.soilUsedL} placeholder="pl. 3" onChange={e => set('soilUsedL', e.target.value)} /></div>
+              {invPlanters.length > 0 && (
+                <div className="field" style={{ marginBottom: 0 }}><label>Kaspó (leltárból)</label>
+                  <select className="select" value={form.planterInvId || ''} onChange={e => { const it = invPlanters.find(x => x.id === e.target.value); setForm(f => ({ ...f, planterInvId: it ? it.id : null, planter: it ? it.name : '' })); }}>
+                    <option value="">— nincs —</option>
+                    {invPlanters.map(it => <option key={it.id} value={it.id}>{it.name}{it.size ? ' · ' + it.size : ''}{it.qty != null ? ` (${it.qty})` : ''}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+            {!editing && (
+              <button type="button" className="kit-chip" style={{ marginTop: 14, width: '100%', justifyContent: 'space-between' }} onClick={() => set('deductInv', !form.deductInv)}>
+                <span>📦 Vond le a felhasznált cserepet / földet a leltárból</span>
+                <span className={cls('switch', form.deductInv && 'on')} style={{ pointerEvents: 'none' }} />
+              </button>
+            )}
+            <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
+              {editing
+                ? 'Átültetéshez / cserépcseréhez használd a növény oldalán a „🪴 Átültetés” gombot – az a régi cserepet visszateszi a leltárba, az újat hozzárendeli, és levonja a felhasznált földet.'
+                : (form.deductInv
+                  ? 'Mentéskor a kiválasztott leltári cserép −1 db, a megadott föld pedig −annyi liter lesz. Ha a növény a saját cserepével érkezett (új vásárlás), kapcsold ki.'
+                  : 'A leltár nem változik – pl. ha a növény a saját cserepével érkezett. (Az később, átültetéskor kerül vissza a leltárba.)')}
+            </div>
+          </div>
           <div className="field"><label>Jegyzet</label><textarea className="textarea" value={form.notes} placeholder="Bármi fontos tudnivaló…" onChange={e => set('notes', e.target.value)} /></div>
 
           {editing && (
@@ -2468,18 +2795,18 @@
           {tasks.length > 0 && (
             <div style={{ marginBottom: evs.length ? 20 : 0 }}>
               <div className="sec-title" style={{ marginBottom: 10 }}>{isFuture ? `Várható teendők (${relDay(iso)})` : 'Mai teendők'}</div>
-              {tasks.map(({ plant, type }) => {
+              {tasks.map(({ plant, type, info }, ti) => {
                 const t = ET[type];
                 return (
-                  <div className="due-row" key={plant.id + type} style={{ borderStyle: isFuture ? 'dashed' : 'solid' }}>
+                  <div className="due-row" key={plant.id + type + ti} style={{ borderStyle: isFuture ? 'dashed' : 'solid', alignItems: 'flex-start' }}>
                     <div className="tl-ic" style={{ background: tint(t.color, .14), width: 42, height: 42, flexShrink: 0 }}>{t.emoji}</div>
                     <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => { close(); openPlant(plant.id); }}>
-                      <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plant.name}</div>
-                      <div className="muted" style={{ fontSize: 12.5 }}>{t.label}{plant.location ? ' · ' + plant.location : ''}</div>
+                      <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plant.name} <span className="muted-3" style={{ fontWeight: 600, fontSize: 12.5 }}>· {t.label}</span></div>
+                      <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.4 }}>{info || (plant.location ? plant.location : t.label)}</div>
                     </div>
                     {isToday
-                      ? <button className="btn btn-soft btn-sm" onClick={() => logTask(plant.id, type)}><Icon name="check" size={15} />Kész</button>
-                      : <span className="muted-3" style={{ fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{t.label}</span>}
+                      ? <button className="btn btn-soft btn-sm" style={{ flexShrink: 0 }} onClick={() => logTask(plant.id, type)}><Icon name="check" size={15} />Kész</button>
+                      : <span className="muted-3" style={{ fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{relDay(iso)}</span>}
                   </div>
                 );
               })}
@@ -2648,19 +2975,21 @@
     const INV_UNITS = ['db', 'l', 'kg', 'zsák', 'csomag', '—'];
 
     function InventoryView({ close }) {
-      const { data, addInv, updateInv, deleteInv, toast } = useStore();
+      const { data, addInv, updateInv, deleteInv, seedPotsFromPlants, toast } = useStore();
       const inv = data.inventory || [];
       const [editing, setEditing] = useState(null);
-      const [form, setForm] = useState({ name: '', cat: 'pot', size: '', qty: 1, unit: 'db', notes: '' });
+      const [form, setForm] = useState({ name: '', cat: 'pot', dia: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' });
       const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-      const startNew = () => { setForm({ name: '', cat: 'pot', size: '', qty: 1, unit: 'db', notes: '' }); setEditing('new'); };
-      const startEdit = (it) => { setForm({ name: it.name || '', cat: it.cat || 'other', size: it.size || '', qty: it.qty != null ? it.qty : 1, unit: it.unit || 'db', notes: it.notes || '' }); setEditing(it.id); };
+      const startNew = () => { setForm({ name: '', cat: 'pot', dia: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' }); setEditing('new'); };
+      const startEdit = (it) => { setForm({ name: it.name || '', cat: it.cat || 'other', dia: it.dia || '', ht: it.ht || '', size: it.size || '', qty: it.qty != null ? it.qty : 1, unit: it.unit || 'db', notes: it.notes || '' }); setEditing(it.id); };
       const save = () => {
         if (!form.name.trim()) { toast('Adj megnevezést', '📦'); return; }
         const item = { ...form, qty: Number(form.qty) || 0 };
+        if (form.cat === 'pot') { item.dia = form.dia ? Number(form.dia) : ''; item.ht = form.ht ? Number(form.ht) : ''; if (!item.size && (item.dia || item.ht)) item.size = potLabel(item); }
         if (editing === 'new') { addInv(item); toast('Hozzáadva a leltárhoz', '📦'); } else { updateInv(editing, item); toast('Mentve', '✅'); }
         setEditing(null);
       };
+      const seedFromPlants = () => { seedPotsFromPlants(); toast('Cserepek felvéve – pontosítsd a darabszámot', '🪴'); };
       const grouped = INV_CATS.map(c => ({ c, items: inv.filter(i => i.cat === c.key) })).filter(g => g.items.length);
 
       if (editing) {
@@ -2676,7 +3005,14 @@
                 {INV_CATS.map(c => <option key={c.key} value={c.key}>{c.emoji} {c.label}</option>)}
               </select>
             </div>
-            <div className="field"><label>Méret / típus (opcionális)</label><input className="input" value={form.size} placeholder="pl. 18 cm átmérő, savanyú, 5 literes" onChange={e => set('size', e.target.value)} /></div>
+            {form.cat === 'pot' ? (
+              <div className="field-row">
+                <div className="field"><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={form.dia} placeholder="pl. 18" onChange={e => set('dia', e.target.value)} /></div>
+                <div className="field"><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.ht} placeholder="pl. 16" onChange={e => set('ht', e.target.value)} /></div>
+              </div>
+            ) : (
+              <div className="field"><label>Méret / típus (opcionális)</label><input className="input" value={form.size} placeholder="pl. savanyú, 5 literes, 40 cm" onChange={e => set('size', e.target.value)} /></div>
+            )}
             <div className="field-row">
               <div className="field"><label>Mennyiség</label>
                 <div className="stepper">
@@ -2700,25 +3036,108 @@
       return (
         <Sheet title="Kertészeti leltár" onClose={close}
           foot={<button className="btn btn-primary btn-block" onClick={startNew}><Icon name="plus" size={18} />Új tétel</button>}>
+          {data.plants.length > 0 && (
+            <button className="btn btn-ghost btn-block btn-sm" style={{ marginBottom: 14 }} onClick={seedFromPlants}><Icon name="leaf" size={15} />Jelenlegi növények cserepeinek felvétele</button>
+          )}
           {inv.length === 0 ? (
-            <div className="empty"><div style={{ fontSize: 30, marginBottom: 8 }}>📦</div><div className="empty-text">Még üres a leltár. Vedd fel a cserepeidet, földjeidet, eszközeidet – méret és mennyiség szerint!</div></div>
+            <div className="empty"><div style={{ fontSize: 30, marginBottom: 8 }}>📦</div><div className="empty-text">Még üres a leltár. Vedd fel a cserepeidet (átmérő × magasság), földjeidet (hány liter), kaspóidat és eszközeidet – a darabszám utólag bármikor módosítható.</div></div>
           ) : (
             grouped.map(({ c, items }) => (
               <div key={c.key} style={{ marginBottom: 16 }}>
                 <div className="sec-title" style={{ marginBottom: 8 }}>{c.emoji} {c.label} <span className="muted-3">({items.length})</span></div>
-                {items.map(it => (
-                  <button key={it.id} className="set-row" style={{ width: '100%', textAlign: 'left', borderRadius: 12 }} onClick={() => startEdit(it)}>
-                    <div className="set-ic" style={{ fontSize: 20 }}>{c.emoji}</div>
-                    <div className="set-main">
-                      <div className="set-title">{it.name}{it.size ? <span className="muted-3" style={{ fontWeight: 600 }}> · {it.size}</span> : ''}</div>
-                      {it.notes && <div className="set-sub">{it.notes}</div>}
-                    </div>
-                    <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{it.qty} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>{it.unit !== '—' ? it.unit : ''}</span></div>
-                  </button>
-                ))}
+                {items.map(it => {
+                  const disp = c.key === 'pot' ? (potLabel(it) || it.size) : it.size;
+                  return (
+                    <button key={it.id} className="set-row" style={{ width: '100%', textAlign: 'left', borderRadius: 12 }} onClick={() => startEdit(it)}>
+                      <div className="set-ic" style={{ fontSize: 20 }}>{c.emoji}</div>
+                      <div className="set-main">
+                        <div className="set-title">{it.name}{disp ? <span className="muted-3" style={{ fontWeight: 600 }}> · {disp}</span> : ''}</div>
+                        {it.notes && <div className="set-sub">{it.notes}</div>}
+                      </div>
+                      <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{it.qty} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>{it.unit !== '—' ? it.unit : ''}</span></div>
+                    </button>
+                  );
+                })}
               </div>
             ))
           )}
+        </Sheet>
+      );
+    }
+
+    /* ============================ ÁTÜLTETÉS (cserépcsere + leltár) ============================ */
+    function RepotSheet({ plantId, close }) {
+      const { data, consumeInv, returnPotToInv, updatePlant, addEvent, toast } = useStore();
+      const plant = data.plants.find(p => p.id === plantId);
+      const inv = data.inventory || [];
+      const invPots = inv.filter(i => i.cat === 'pot');
+      const invSoils = inv.filter(i => i.cat === 'soil');
+      const [potInvId, setPotInvId] = useState('');
+      const [dia, setDia] = useState('');
+      const [ht, setHt] = useState('');
+      const [soilInvId, setSoilInvId] = useState('');
+      const [soilName, setSoilName] = useState(plant ? (plant.soil || '') : '');
+      const [soilL, setSoilL] = useState('');
+      const [returnOld, setReturnOld] = useState(true);
+      if (!plant) { close(); return null; }
+      const oldPot = plant.pot || (plant.potSize ? { dia: parsePotDia(plant.potSize), size: plant.potSize } : null);
+
+      const pickPot = (id) => { setPotInvId(id); const it = invPots.find(x => x.id === id); if (it) { setDia(it.dia || ''); setHt(it.ht || ''); } };
+      const confirm = () => {
+        const newPot = (dia || ht) ? { dia: dia ? Number(dia) : '', ht: ht ? Number(ht) : '', invId: potInvId || null } : null;
+        if (returnOld && oldPot) returnPotToInv(oldPot);
+        consumeInv({ potInvId: potInvId || null, soilInvId: soilInvId || null, soilL: soilL ? Number(soilL) : 0 });
+        updatePlant(plantId, { pot: newPot || oldPot, potSize: potLabel(newPot) || plant.potSize, soil: soilName || plant.soil, soilUsedL: soilL ? Number(soilL) : (plant.soilUsedL || null) });
+        addEvent({ plantId, type: 'repot', note: 'Átültetve' + (newPot && potLabel(newPot) ? ' – ' + potLabel(newPot) : '') });
+        toast(`${plant.name} átültetve`, '🪴');
+        close();
+      };
+
+      return (
+        <Sheet title="Átültetés / cserépcsere" onClose={close}
+          foot={<React.Fragment>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={close}>Mégse</button>
+            <button className="btn btn-primary" style={{ flex: 2 }} onClick={confirm}><Icon name="check" size={18} />Átültetés rögzítése</button>
+          </React.Fragment>}>
+          <div className="muted" style={{ marginBottom: 16, fontWeight: 600 }}>🌱 {plant.name}{oldPot && potLabel(oldPot) ? ' · jelenleg: ' + potLabel(oldPot) : ''}</div>
+
+          <div className="sec-title" style={{ marginBottom: 10 }}>Új cserép</div>
+          {invPots.length > 0 && (
+            <div className="field"><label>Leltárból</label>
+              <select className="select" value={potInvId} onChange={e => pickPot(e.target.value)}>
+                <option value="">— egyéni méret megadása —</option>
+                {invPots.map(it => <option key={it.id} value={it.id}>{potLabel(it) || it.name}{it.qty != null ? ` · ${it.qty} db raktáron` : ''}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="field-row">
+            <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={dia} placeholder="pl. 22" onChange={e => { setDia(e.target.value); setPotInvId(''); }} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 20" onChange={e => { setHt(e.target.value); setPotInvId(''); }} /></div>
+          </div>
+
+          <div className="sec-title" style={{ margin: '18px 0 10px' }}>Föld</div>
+          {invSoils.length > 0 && (
+            <div className="field"><label>Leltárból</label>
+              <select className="select" value={soilInvId} onChange={e => { const it = invSoils.find(x => x.id === e.target.value); setSoilInvId(e.target.value); if (it) setSoilName(it.name + (it.size ? ' (' + it.size + ')' : '')); }}>
+                <option value="">— egyéni —</option>
+                {invSoils.map(it => <option key={it.id} value={it.id}>{it.name}{it.qty != null ? ` · ${it.qty} ${it.unit || 'l'} raktáron` : ''}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="field-row">
+            <div className="field" style={{ marginBottom: 0 }}><label>Föld megnevezése</label><input className="input" value={soilName} placeholder="pl. Univerzális" onChange={e => setSoilName(e.target.value)} /></div>
+            <div className="field" style={{ marginBottom: 0 }}><label>Felhasznált (l)</label><input className="input" type="number" inputMode="decimal" value={soilL} placeholder="pl. 4" onChange={e => setSoilL(e.target.value)} /></div>
+          </div>
+
+          {oldPot && (potLabel(oldPot) || oldPot.dia) && (
+            <button type="button" className="kit-chip" style={{ width: '100%', justifyContent: 'space-between', marginTop: 16 }} onClick={() => setReturnOld(!returnOld)}>
+              <span>♻️ A régi cserép ({potLabel(oldPot) || 'cserép'}) vissza a leltárba</span>
+              <span className={cls('switch', returnOld && 'on')} style={{ pointerEvents: 'none' }} />
+            </button>
+          )}
+          <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 12 }}>
+            Rögzítéskor a régi cserép visszakerül a leltárba (+1 db), a kiválasztott új leltári cserép −1 db, a megadott föld pedig −annyi liter lesz, és új „Átültetés” bejegyzés készül a naplóba.
+          </div>
         </Sheet>
       );
     }
@@ -2740,6 +3159,25 @@
       const scrollRef = useRef(null);
       const indRef = useRef(null);
       const ptr = useRef({ tracking: false, startY: 0, ready: false });
+
+      // Telefonos VISSZA gomb: ne lépjen ki az appból – előbb csukja be a felugró ablakot / billentyűzetet / részleteket
+      const modalRef = useRef(null); modalRef.current = modal;
+      const detailRef = useRef(null); detailRef.current = detail;
+      const viewRef = useRef('dashboard'); viewRef.current = view;
+      useEffect(() => {
+        const buffer = () => { try { history.pushState({ palanta: true }, ''); } catch (e) {} };
+        buffer();
+        const onPop = () => {
+          const ae = document.activeElement;
+          if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) { ae.blur(); buffer(); return; }   // csak a billentyűzetet csukja le
+          if (modalRef.current) { setModal(null); buffer(); return; }                                  // felugró ablak bezárása
+          if (detailRef.current) { setDetail(null); buffer(); return; }                                 // vissza a listához
+          if (viewRef.current !== 'dashboard') { setView('dashboard'); buffer(); return; }              // vissza a kezdőlapra
+          // kezdőlapon, semmi nyitva → engedjük kilépni
+        };
+        window.addEventListener('popstate', onPop);
+        return () => window.removeEventListener('popstate', onPop);
+      }, []);
 
       // Pull-to-refresh: a lap tetején lefelé húzva újratölt (és lehúzza a friss verziót)
       useEffect(() => {
@@ -2798,7 +3236,7 @@
       const showFab = ['dashboard', 'plants', 'calendar'].includes(view) && !detail;
 
       let main;
-      if (detail) main = <PlantDetail plantId={detail} back={() => setDetail(null)} edit={id => setModal({ type: 'form', plantId: id })} editEvent={id => setModal({ type: 'event', eventId: id })} logFor={id => setModal({ type: 'log', plant: id })} />;
+      if (detail) main = <PlantDetail plantId={detail} back={() => setDetail(null)} edit={id => setModal({ type: 'form', plantId: id })} editEvent={id => setModal({ type: 'event', eventId: id })} logFor={id => setModal({ type: 'log', plant: id })} repot={id => setModal({ type: 'repot', plantId: id })} />;
       else if (view === 'dashboard') main = <Dashboard go={go} openPlant={openPlant} quickLog={() => setModal({ type: 'log' })} />;
       else if (view === 'plants') main = <PlantsList openPlant={openPlant} quickLog={() => setModal({ type: 'log' })} />;
       else if (view === 'calendar') main = <CalendarView openPlant={openPlant} openDay={iso => setModal({ type: 'day', iso })} />;
@@ -2856,6 +3294,7 @@
           {modal && modal.type === 'event' && <EventEdit eventId={modal.eventId} close={closeModal} />}
           {modal && modal.type === 'kb' && <KnowledgeBase close={closeModal} />}
           {modal && modal.type === 'inv' && <InventoryView close={closeModal} />}
+          {modal && modal.type === 'repot' && <RepotSheet plantId={modal.plantId} close={closeModal} />}
         </div>
       );
     }
