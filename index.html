@@ -1154,28 +1154,34 @@
       return WEATHER.byLoc[key] || null;
     }
     function weatherFactorFor(plant) { const w = weatherFor(plant); return (w && w.factor) ? w.factor : 1; }
-    function computeWeatherFactor(daily) {
+    function computeWeatherFactor(daily, curTemp) {
       const today = todayISO();
       const idx = daily.findIndex(d => d.date === today);
       if (idx < 0) return null;
       const prev = daily.slice(Math.max(0, idx - 2), idx);            // előző 1–2 nap
-      const next = daily.slice(idx, idx + 4);                         // ma + 3 nap (4 napos előrejelzés)
-      const recentRain = prev.reduce((a, d) => a + (d.precip || 0), 0) + (next[0] ? (next[0].precip || 0) : 0);
-      const comingRain = next.slice(1).reduce((a, d) => a + (d.precip || 0), 0);
-      const hotDry = next.filter(d => (d.tmax != null && d.tmax >= 28) && (d.precip || 0) < 2).length;
-      let factor = 1; const parts = []; let emoji = '🌤️';
-      if (recentRain >= 8) { factor *= 1.7; parts.push('sok eső esett (' + Math.round(recentRain) + ' mm) – az öntözés jórészt elintézve'); emoji = '🌧️'; }
-      else if (recentRain >= 3) { factor *= 1.3; parts.push('esett egy kis eső (' + Math.round(recentRain) + ' mm) – ráérsz az öntözéssel'); emoji = '🌦️'; }
-      if (hotDry >= 2) { factor *= 0.65; parts.push('forró, száraz napok jönnek – öntözz sűrűbben'); emoji = '☀️'; }
-      else if (hotDry === 1) { factor *= 0.82; parts.push('meleg, száraz nap várható'); if (emoji === '🌤️') emoji = '☀️'; }
-      if (comingRain >= 6 && recentRain < 8) { factor *= 1.15; parts.push('eső jön a következő napokban'); if (emoji === '🌤️') emoji = '🌦️'; }
-      factor = Math.max(0.5, Math.min(2.2, factor));
-      return { factor, summary: parts.length ? (parts.join('; ') + '.') : 'szokásos időjárás, az ütemezés változatlan.', emoji };
+      const win = daily.slice(idx, idx + 3);                          // ma + 2 nap (a következő öntözésig releváns)
+      const recentRain = prev.reduce((a, d) => a + (d.precip || 0), 0) + (win[0] ? (win[0].precip || 0) : 0);
+      const comingRain = win.slice(1).reduce((a, d) => a + (d.precip || 0), 0);
+      const temps = win.map(d => d.tmax).filter(t => t != null);
+      const tmaxToday = (win[0] && win[0].tmax != null) ? win[0].tmax : (curTemp != null ? curTemp : null);
+      const avgMax = temps.length ? (temps.reduce((a, b) => a + b, 0) / temps.length) : (curTemp != null ? curTemp : 22);
+      // Hőfaktor: ~22 °C az alap (1.0). Melegben gyorsabban szárad a föld → kisebb intervallum (kb. −3.5%/°C); hűvösben lassabban.
+      let factor = Math.max(0.45, Math.min(1.5, 1 - (avgMax - 22) * 0.035));
+      const parts = [];
+      let emoji = avgMax >= 30 ? '🔥' : avgMax >= 26 ? '☀️' : avgMax <= 12 ? '❄️' : '🌤️';
+      if (avgMax >= 30) parts.push(`forróság (csúcs ~${Math.round(avgMax)} °C) – a föld gyorsan kiszárad, sűrűbben kell öntözni`);
+      else if (avgMax >= 26) parts.push(`meleg (csúcs ~${Math.round(avgMax)} °C) – gyorsabban szárad a föld`);
+      else if (avgMax <= 12) parts.push(`hűvös (csúcs ~${Math.round(avgMax)} °C) – lassabban szárad a föld`);
+      if (recentRain >= 8) { factor *= 1.6; parts.push(`sok eső esett (${Math.round(recentRain)} mm) – az öntözés jórészt elintézve`); emoji = '🌧️'; }
+      else if (recentRain >= 3) { factor *= 1.25; parts.push(`esett egy kis eső (${Math.round(recentRain)} mm) – ráérsz az öntözéssel`); if (emoji !== '🔥') emoji = '🌦️'; }
+      if (comingRain >= 5 && recentRain < 8) { factor *= 1.12; parts.push('eső jön a következő napokban'); }
+      factor = Math.max(0.4, Math.min(2.2, factor));
+      return { factor, tmaxToday, summary: parts.length ? (parts.join('; ') + '.') : 'szokásos időjárás, az ütemezés változatlan.', emoji };
     }
     async function fetchWeatherFor(city) {
       const key = weatherLocKey(city); if (!key) return;
       const cached = WEATHER.byLoc[key];
-      if (cached && cached.fetched && (Date.now() - cached.fetched) < 3 * 3600 * 1000) return; // 3 órás cache
+      if (cached && cached.fetched && (Date.now() - cached.fetched) < 90 * 60 * 1000) return; // 1,5 órás cache (a fok frissüljön)
       try {
         let lat = cached && cached.lat, lon = cached && cached.lon, label = cached && cached.label;
         if (lat == null) {
@@ -1184,11 +1190,12 @@
           if (!hit) { WEATHER.byLoc[key] = { fetched: Date.now(), factor: 1, summary: 'ismeretlen település – ellenőrizd a nevét.', emoji: '❓' }; return; }
           lat = hit.latitude; lon = hit.longitude; label = hit.name + (hit.admin1 ? ', ' + hit.admin1 : '');
         }
-        const f = await fetch('https://api.open-meteo.com/v1/forecast?timezone=auto&past_days=2&forecast_days=4&daily=temperature_2m_max,precipitation_sum,precipitation_probability_max&latitude=' + lat + '&longitude=' + lon).then(r => r.json());
+        const f = await fetch('https://api.open-meteo.com/v1/forecast?timezone=auto&past_days=2&forecast_days=4&current=temperature_2m&daily=temperature_2m_max,precipitation_sum,precipitation_probability_max&latitude=' + lat + '&longitude=' + lon).then(r => r.json());
         const dl = f && f.daily; if (!dl || !dl.time) return;
         const daily = dl.time.map((t, i) => ({ date: t, tmax: dl.temperature_2m_max[i], precip: dl.precipitation_sum[i], pprob: dl.precipitation_probability_max ? dl.precipitation_probability_max[i] : null }));
-        const calc = computeWeatherFactor(daily) || { factor: 1, summary: '', emoji: '🌤️' };
-        WEATHER.byLoc[key] = { fetched: Date.now(), lat, lon, label, daily, ...calc };
+        const curTemp = (f.current && typeof f.current.temperature_2m === 'number') ? f.current.temperature_2m : null;
+        const calc = computeWeatherFactor(daily, curTemp) || { factor: 1, summary: '', emoji: '🌤️' };
+        WEATHER.byLoc[key] = { fetched: Date.now(), lat, lon, label, daily, temp: curTemp, ...calc };
       } catch (e) { /* offline / hiba – marad a korábbi vagy az alap ütemezés */ }
     }
 
@@ -1539,11 +1546,12 @@
         updateInv(id, patch) { setData(d => ({ ...d, inventory: (d.inventory || []).map(i => i.id === id ? { ...i, ...patch } : i) })); },
         deleteInv(id) { setData(d => ({ ...d, inventory: (d.inventory || []).filter(i => i.id !== id) })); },
         // Felhasznált cserép/kaspó (−1 db) és föld (−liter) levonása a leltárból
-        consumeInv({ potInvId, planterInvId, soilInvId, soilL }) {
+        consumeInv({ potInvId, planterInvId, trayInvId, soilInvId, soilL }) {
           setData(d => ({
             ...d, inventory: (d.inventory || []).map(i => {
               if (potInvId && i.id === potInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
               if (planterInvId && i.id === planterInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
+              if (trayInvId && i.id === trayInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
               if (soilInvId && i.id === soilInvId && soilL) return { ...i, qty: Math.max(0, Math.round(((Number(i.qty) || 0) - Number(soilL)) * 10) / 10) };
               return i;
             }),
@@ -1940,6 +1948,9 @@
       const f = fertInfo(plant, data.events);
       const nextMove = nextMoveWithin(plant, data.events, -14, 30);
       const pollNow = pollinateActive(plant, data.events);
+      const isOutdoor = (plant.placement || 'indoor') === 'outdoor';
+      const wfactor = weatherFactorFor(plant);
+      const effWaterInterval = plant.waterIntervalDays ? Math.max(1, Math.round(plant.waterIntervalDays * waterMult(plant, seasonNow()) * wfactor)) : null;
       const potMates = (plant.pot && plant.pot.potId) ? data.plants.filter(p => p.id !== plantId && p.pot && p.pot.potId === plant.pot.potId) : [];
       const waterEvents = data.events.filter(e => e.plantId === plantId && e.type === 'water').map(e => e.date).sort();
       const gaps = waterEvents.slice(1).map((d, i) => daysBetween(waterEvents[i], d));
@@ -1977,7 +1988,7 @@
               <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
                 <span className="info-chip">{(plant.placement || 'indoor') === 'outdoor' ? '🌳 Kint' : '🏠 Bent'}</span>
                 {plant.location && <span className="info-chip"><Icon name="pin" size={13} />{plant.location}</span>}
-                {(plant.placement === 'outdoor' && plant.city) && <span className="info-chip">📍 {plant.city}</span>}
+                {(isOutdoor && plant.city) && <span className="info-chip">📍 {plant.city}{w.weather && w.weather.temp != null ? ' · ' + Math.round(w.weather.temp) + '°C' : ''}</span>}
                 {plant.light && <span className="info-chip">{LIGHT[plant.light].emoji} {LIGHT[plant.light].label.split(',')[0].split(' / ')[0]}</span>}
                 {(potLabel(plant.pot) || plant.potSize) && <span className="info-chip">🪴 {potLabel(plant.pot) || plant.potSize}</span>}
                 {potMates.length > 0 && <span className="info-chip">👯 Közös cserép: {potMates.map(p => p.name).join(', ')}</span>}
@@ -1989,7 +2000,7 @@
             <div className="next-card">
               <div className="row" style={{ gap: 7, marginBottom: 6 }}><span style={{ fontSize: 16 }}>💧</span><span className="sec-title">Öntözés</span></div>
               <div style={{ fontWeight: 800, fontFamily: 'var(--display)', fontSize: 17, color: STATE_META[w.state].color }}>{waterPillText(w)}</div>
-              <div className="muted-3" style={{ fontSize: 12, marginTop: 3 }}>{plant.waterIntervalDays ? `kb. ${Math.max(1, Math.round(plant.waterIntervalDays * waterMult(plant, seasonNow())))} naponta · ${SEASON_HU[seasonNow()]}` : 'nincs ütemezve'}</div>
+              <div className="muted-3" style={{ fontSize: 12, marginTop: 3 }}>{plant.waterIntervalDays ? `kb. ${effWaterInterval} naponta · ${SEASON_HU[seasonNow()]}${(isOutdoor && wfactor < 0.92) ? ' · időjárás: sűrűbben' : (isOutdoor && wfactor > 1.1) ? ' · időjárás: ritkábban' : ''}` : 'nincs ütemezve'}</div>
             </div>
             <div className="next-card">
               <div className="row" style={{ gap: 7, marginBottom: 6 }}><span style={{ fontSize: 16 }}>🌿</span><span className="sec-title">Tápoldat</span></div>
@@ -1998,11 +2009,28 @@
             </div>
           </div>
 
-          {w.weather && w.weather.summary && (
-            <div className="care-card" style={{ marginBottom: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{w.weather.emoji}</span>
-              <div style={{ fontSize: 13.5, lineHeight: 1.45 }}><b>Időjárás{w.weather.label ? ' · ' + w.weather.label : ''}:</b> {w.weather.summary}</div>
-            </div>
+          {isOutdoor && (
+            plant.city ? (w.weather ? (
+              <div className="care-card" style={{ marginBottom: 14 }}>
+                <div className="row" style={{ gap: 12 }}>
+                  <span style={{ fontSize: 30, flexShrink: 0 }}>{w.weather.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+                      <div style={{ fontWeight: 800, fontFamily: 'var(--display)', fontSize: 24, lineHeight: 1 }}>{w.weather.temp != null ? Math.round(w.weather.temp) + '°C' : '–'}</div>
+                      {w.weather.tmaxToday != null && <div className="muted-3" style={{ fontSize: 12 }}>ma max {Math.round(w.weather.tmaxToday)}°C</div>}
+                    </div>
+                    <div className="muted-3" style={{ fontSize: 12, marginTop: 2 }}>📍 {w.weather.label || plant.city}</div>
+                  </div>
+                </div>
+                {w.weather.summary && <div style={{ fontSize: 13, lineHeight: 1.45, marginTop: 10 }}>{w.weather.summary}</div>}
+              </div>
+            ) : (
+              <div className="care-card muted-3" style={{ marginBottom: 14, fontSize: 12.5, lineHeight: 1.45 }}>🌦️ Időjárás lekérése a(z) {plant.city} helyszínre… (internetkapcsolat szükséges – frissítsd a lapot, ha nem jelenik meg).</div>
+            )) : (
+              <button className="care-card" style={{ marginBottom: 14, width: '100%', textAlign: 'left', fontSize: 12.5, lineHeight: 1.5, color: 'var(--text-2)' }} onClick={() => edit(plant.id)}>
+                📍 Add meg ennél a kinti növénynél a <b>települést</b>, és az app kiírja a pillanatnyi hőmérsékletet, és az időjárás (hőség, eső) szerint módosítja az öntözési ütemet. <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Beállítom →</span>
+              </button>
+            )
           )}
           {nextMove && (
             <div className="care-card" style={{ marginBottom: 14, borderColor: 'var(--soon)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -2498,12 +2526,13 @@
       const { data, addPlant, updatePlant, deletePlant, consumeInv, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
       const [form, setForm] = useState(() => editing
-        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
-        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, trayInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
+        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, tray: '', trayInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
       const inv = data.inventory || [];
       const invPots = inv.filter(i => i.cat === 'pot');
       const invSoils = inv.filter(i => i.cat === 'soil');
       const invPlanters = inv.filter(i => i.cat === 'planter');
+      const invTrays = inv.filter(i => i.cat === 'tray');
       const otherPlants = (data.plants || []).filter(p => p.id !== plantId && p.pot && (p.pot.dia || p.pot.len || p.pot.wid));
       // Cserépméret változásakor automatikusan kitölti a becsült földmennyiséget (amíg a user kézzel nem írta felül)
       const setPotField = (patch) => setForm(f => {
@@ -2557,12 +2586,12 @@
             : ((editing && editing.pot) || null);
         }
         const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: soilL };
-        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
+        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'trayInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
         if (editing) { updatePlant(editing.id, payload); toast('Mentve', '✅'); }
         else {
           addPlant(payload);
-          if (deduct && (form.potInvId || form.planterInvId || (form.soilInvId && soilL))) {
-            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, soilInvId: form.soilInvId, soilL });
+          if (deduct && (form.potInvId || form.planterInvId || form.trayInvId || (form.soilInvId && soilL))) {
+            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, trayInvId: form.trayInvId, soilInvId: form.soilInvId, soilL });
           }
           toast('Növény hozzáadva', '🌿');
         }
@@ -2746,6 +2775,14 @@
                     </div>
                   )}
                 </div>
+                {invTrays.length > 0 && (
+                  <div className="field" style={{ marginTop: 12, marginBottom: 0 }}><label>Tálca (leltárból)</label>
+                    <select className="select" value={form.trayInvId || ''} onChange={e => { const it = invTrays.find(x => x.id === e.target.value); setForm(f => ({ ...f, trayInvId: it ? it.id : null, tray: it ? (it.name + (it.size ? ' (' + it.size + ')' : '')) : '' })); }}>
+                      <option value="">— nincs —</option>
+                      {invTrays.map(it => <option key={it.id} value={it.id}>{it.name}{it.size ? ' · ' + it.size : ''}{it.qty != null ? ` (${it.qty})` : ''}</option>)}
+                    </select>
+                  </div>
+                )}
                 {!editing && (
                   <button type="button" className="kit-chip" style={{ marginTop: 14, width: '100%', justifyContent: 'space-between' }} onClick={() => set('deductInv', !form.deductInv)}>
                     <span>📦 Vond le a felhasznált cserepet / földet a leltárból</span>
@@ -3051,6 +3088,7 @@
     /* ============================ KERTÉSZETI LELTÁR ============================ */
     const INV_CATS = [
       { key: 'pot', label: 'Cserép', emoji: '🪴' },
+      { key: 'tray', label: 'Tálca', emoji: '🍽️' },
       { key: 'planter', label: 'Kaspó', emoji: '🏺' },
       { key: 'soil', label: 'Föld / közeg', emoji: '🟤' },
       { key: 'fertilizer', label: 'Tápoldat / trágya', emoji: '🌿' },
@@ -3083,6 +3121,24 @@
       };
       const seedFromPlants = () => { seedPotsFromPlants(); toast('Cserepek felvéve – pontosítsd a darabszámot', '🪴'); };
       const grouped = INV_CATS.map(c => ({ c, items: inv.filter(i => i.cat === c.key) })).filter(g => g.items.length);
+      // Felhasznált (a növényekben lévő) cserepek és tálcák – a növényekből származtatva (közös cserép csak egyszer)
+      const usedPots = useMemo(() => {
+        const byId = {}; let auto = 0;
+        (data.plants || []).forEach(p => {
+          if (!(p.pot && potHasDims(p.pot))) return;
+          const k = p.pot.potId || ('a' + (auto++));
+          (byId[k] = byId[k] || { label: potLabel(p.pot) || 'Cserép', names: [] }).names.push(p.name);
+        });
+        const byLabel = {};
+        Object.values(byId).forEach(pot => { const g = (byLabel[pot.label] = byLabel[pot.label] || { label: pot.label, count: 0, names: [] }); g.count++; g.names.push(...pot.names); });
+        return Object.values(byLabel);
+      }, [data.plants]);
+      const usedTrays = useMemo(() => {
+        const byLabel = {};
+        (data.plants || []).forEach(p => { if (p.tray) { const g = (byLabel[p.tray] = byLabel[p.tray] || { label: p.tray, count: 0, names: [] }); g.count++; g.names.push(p.name); } });
+        return Object.values(byLabel);
+      }, [data.plants]);
+      const hasUsed = usedPots.length > 0 || usedTrays.length > 0;
 
       if (editing) {
         return (
@@ -3148,27 +3204,52 @@
           {data.plants.length > 0 && (
             <button className="btn btn-ghost btn-block btn-sm" style={{ marginBottom: 14 }} onClick={seedFromPlants}><Icon name="leaf" size={15} />Jelenlegi növények cserepeinek felvétele</button>
           )}
-          {inv.length === 0 ? (
-            <div className="empty"><div style={{ fontSize: 30, marginBottom: 8 }}>📦</div><div className="empty-text">Még üres a leltár. Vedd fel a cserepeidet (átmérő × magasság), földjeidet (hány liter), kaspóidat és eszközeidet – a darabszám utólag bármikor módosítható.</div></div>
+          {inv.length === 0 && !hasUsed ? (
+            <div className="empty"><div style={{ fontSize: 30, marginBottom: 8 }}>📦</div><div className="empty-text">Még üres a leltár. Vedd fel a cserepeidet (átmérő × magasság), tálcáidat, földjeidet (hány liter), kaspóidat és eszközeidet – a darabszám utólag bármikor módosítható.</div></div>
           ) : (
-            grouped.map(({ c, items }) => (
-              <div key={c.key} style={{ marginBottom: 16 }}>
-                <div className="sec-title" style={{ marginBottom: 8 }}>{c.emoji} {c.label} <span className="muted-3">({items.length})</span></div>
-                {items.map(it => {
-                  const disp = c.key === 'pot' ? (potLabel(it) || it.size) : it.size;
-                  return (
-                    <button key={it.id} className="set-row" style={{ width: '100%', textAlign: 'left', borderRadius: 12 }} onClick={() => startEdit(it)}>
-                      <div className="set-ic" style={{ fontSize: 20 }}>{c.emoji}</div>
-                      <div className="set-main">
-                        <div className="set-title">{it.name}{disp ? <span className="muted-3" style={{ fontWeight: 600 }}> · {disp}</span> : ''}</div>
-                        {it.notes && <div className="set-sub">{it.notes}</div>}
-                      </div>
-                      <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{it.qty} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>{it.unit !== '—' ? it.unit : ''}</span></div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))
+            <React.Fragment>
+              {grouped.map(({ c, items }) => {
+                const free = (c.key === 'pot' || c.key === 'tray');
+                return (
+                  <div key={c.key} style={{ marginBottom: 16 }}>
+                    <div className="sec-title" style={{ marginBottom: 8 }}>{c.emoji} {c.label}{free ? ' · szabad' : ''} <span className="muted-3">({items.length})</span></div>
+                    {items.map(it => {
+                      const disp = c.key === 'pot' ? (potLabel(it) || it.size) : it.size;
+                      return (
+                        <button key={it.id} className="set-row" style={{ width: '100%', textAlign: 'left', borderRadius: 12 }} onClick={() => startEdit(it)}>
+                          <div className="set-ic" style={{ fontSize: 20 }}>{c.emoji}</div>
+                          <div className="set-main">
+                            <div className="set-title">{it.name}{disp ? <span className="muted-3" style={{ fontWeight: 600 }}> · {disp}</span> : ''}</div>
+                            {it.notes && <div className="set-sub">{it.notes}</div>}
+                          </div>
+                          <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{it.qty} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>{it.unit !== '—' ? it.unit : ''}</span></div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+              {hasUsed && (
+                <div style={{ marginBottom: 8 }}>
+                  <div className="sec-title" style={{ marginBottom: 8 }}>🔒 Felhasznált · növényekben</div>
+                  {usedPots.map((g, i) => (
+                    <div key={'up' + i} className="set-row" style={{ borderRadius: 12 }}>
+                      <div className="set-ic" style={{ fontSize: 20 }}>🪴</div>
+                      <div className="set-main"><div className="set-title">Cserép{g.label ? <span className="muted-3" style={{ fontWeight: 600 }}> · {g.label}</span> : ''}</div><div className="set-sub" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.names.join(', ')}</div></div>
+                      <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{g.count} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>db</span></div>
+                    </div>
+                  ))}
+                  {usedTrays.map((g, i) => (
+                    <div key={'ut' + i} className="set-row" style={{ borderRadius: 12 }}>
+                      <div className="set-ic" style={{ fontSize: 20 }}>🍽️</div>
+                      <div className="set-main"><div className="set-title">Tálca <span className="muted-3" style={{ fontWeight: 600 }}>· {g.label}</span></div><div className="set-sub" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.names.join(', ')}</div></div>
+                      <div style={{ fontWeight: 800, fontFamily: 'var(--display)', whiteSpace: 'nowrap' }}>{g.count} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)' }}>db</span></div>
+                    </div>
+                  ))}
+                  <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 8 }}>Ezek a növényeidnél lévő cserepek és tálcák. Átültetéskor a felszabaduló cserép visszakerül a „szabad” közé.</div>
+                </div>
+              )}
+            </React.Fragment>
           )}
         </Sheet>
       );
@@ -3184,7 +3265,8 @@
       const [potInvId, setPotInvId] = useState('');
       const [shape, setShape] = useState('round');
       const [dia, setDia] = useState('');
-      const [side, setSide] = useState('');
+      const [len, setLen] = useState('');
+      const [wid, setWid] = useState('');
       const [ht, setHt] = useState('');
       const [soilInvId, setSoilInvId] = useState('');
       const [soilName, setSoilName] = useState(plant ? (plant.soil || '') : '');
@@ -3195,11 +3277,11 @@
       const oldPot = plant.pot || (plant.potSize ? { dia: parsePotDia(plant.potSize), size: plant.potSize } : null);
       const sharedMates = (data.plants || []).filter(p => p.id !== plantId && p.pot && oldPot && oldPot.potId && p.pot.potId === oldPot.potId);
 
-      const autoSoil = (sh, d, sd, h) => { if (!soilTouched) { const est = estimateSoilL({ shape: sh, dia: d, side: sd, ht: h }); if (est != null) setSoilL(est); } };
-      const pickPot = (id) => { setPotInvId(id); const it = invPots.find(x => x.id === id); if (it) { const sh = it.shape || 'round'; setShape(sh); setDia(it.dia || ''); setSide(it.side || ''); setHt(it.ht || ''); autoSoil(sh, it.dia, it.side, it.ht); } };
+      const autoSoil = (pot) => { if (!soilTouched) { const est = estimateSoilL(pot); if (est != null) setSoilL(est); } };
+      const pickPot = (id) => { setPotInvId(id); const it = invPots.find(x => x.id === id); if (it) { const sh = it.shape || 'round'; setShape(sh); setDia(it.dia || ''); setLen(it.len || ''); setWid(it.wid || ''); setHt(it.ht || ''); autoSoil({ shape: sh, dia: it.dia, len: it.len, wid: it.wid, ht: it.ht }); } };
       const confirm = () => {
-        const hasDims = shape === 'square' ? side : dia;
-        const newPot = (hasDims || ht) ? { shape, dia: (shape !== 'square' && dia) ? Number(dia) : '', side: (shape === 'square' && side) ? Number(side) : '', ht: ht ? Number(ht) : '', invId: potInvId || null, potId: uid() } : null;
+        const hasDims = shape === 'square' ? (len || wid) : dia;
+        const newPot = (hasDims || ht) ? { shape, dia: (shape !== 'square' && dia) ? Number(dia) : '', len: (shape === 'square' && len) ? Number(len) : '', wid: (shape === 'square' && wid) ? Number(wid) : '', ht: ht ? Number(ht) : '', invId: potInvId || null, potId: uid() } : null;
         if (returnOld && oldPot && !sharedMates.length) returnPotToInv(oldPot);
         consumeInv({ potInvId: potInvId || null, soilInvId: soilInvId || null, soilL: soilL ? Number(soilL) : 0 });
         updatePlant(plantId, { pot: newPot || oldPot, potSize: potLabel(newPot) || plant.potSize, soil: soilName || plant.soil, soilUsedL: soilL ? Number(soilL) : (plant.soilUsedL || null) });
@@ -3228,18 +3310,22 @@
           <div className="field"><label>Forma</label>
             <div className="preset-row">
               {[['round', '⭕ Kerek'], ['square', '⬛ Négyzet']].map(([k, l]) => (
-                <button key={k} className={cls('preset', shape === k && 'on')} onClick={() => { setShape(k); setPotInvId(''); autoSoil(k, dia, side, ht); }}>{l}</button>
+                <button key={k} className={cls('preset', shape === k && 'on')} onClick={() => { setShape(k); setPotInvId(''); autoSoil({ shape: k, dia, len, wid, ht }); }}>{l}</button>
               ))}
             </div>
           </div>
-          <div className="field-row">
-            <div className="field" style={{ marginBottom: 0 }}><label>{shape === 'square' ? 'Oldalhossz (cm)' : 'Átmérő (cm)'}</label>
-              {shape === 'square'
-                ? <input className="input" type="number" inputMode="numeric" value={side} placeholder="pl. 18" onChange={e => { setSide(e.target.value); setPotInvId(''); autoSoil('square', dia, e.target.value, ht); }} />
-                : <input className="input" type="number" inputMode="numeric" value={dia} placeholder="pl. 22" onChange={e => { setDia(e.target.value); setPotInvId(''); autoSoil('round', e.target.value, side, ht); }} />}
+          {shape === 'square' ? (
+            <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div className="field" style={{ marginBottom: 0 }}><label>Hossz (cm)</label><input className="input" type="number" inputMode="numeric" value={len} placeholder="pl. 30" onChange={e => { setLen(e.target.value); setPotInvId(''); autoSoil({ shape: 'square', len: e.target.value, wid, ht }); }} /></div>
+              <div className="field" style={{ marginBottom: 0 }}><label>Szél. (cm)</label><input className="input" type="number" inputMode="numeric" value={wid} placeholder="pl. 15" onChange={e => { setWid(e.target.value); setPotInvId(''); autoSoil({ shape: 'square', len, wid: e.target.value, ht }); }} /></div>
+              <div className="field" style={{ marginBottom: 0 }}><label>Mag. (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 18" onChange={e => { setHt(e.target.value); setPotInvId(''); autoSoil({ shape: 'square', len, wid, ht: e.target.value }); }} /></div>
             </div>
-            <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 20" onChange={e => { setHt(e.target.value); setPotInvId(''); autoSoil(shape, dia, side, e.target.value); }} /></div>
-          </div>
+          ) : (
+            <div className="field-row">
+              <div className="field" style={{ marginBottom: 0 }}><label>Átmérő (cm)</label><input className="input" type="number" inputMode="numeric" value={dia} placeholder="pl. 22" onChange={e => { setDia(e.target.value); setPotInvId(''); autoSoil({ shape: 'round', dia: e.target.value, ht }); }} /></div>
+              <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={ht} placeholder="pl. 20" onChange={e => { setHt(e.target.value); setPotInvId(''); autoSoil({ shape: 'round', dia, ht: e.target.value }); }} /></div>
+            </div>
+          )}
 
           <div className="sec-title" style={{ margin: '18px 0 10px' }}>Föld</div>
           {invSoils.length > 0 && (
@@ -3257,7 +3343,7 @@
 
           {sharedMates.length > 0 ? (
             <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 16 }}>♻️ A régi cserép közös ({sharedMates.map(p => p.name).join(', ')} is benne van), ezért nem kerül vissza a leltárba.</div>
-          ) : (oldPot && (potLabel(oldPot) || oldPot.dia || oldPot.side)) ? (
+          ) : (oldPot && (potLabel(oldPot) || oldPot.dia || oldPot.len || oldPot.wid)) ? (
             <button type="button" className="kit-chip" style={{ width: '100%', justifyContent: 'space-between', marginTop: 16 }} onClick={() => setReturnOld(!returnOld)}>
               <span>♻️ A régi cserép ({potLabel(oldPot) || 'cserép'}) vissza a leltárba</span>
               <span className={cls('switch', returnOld && 'on')} style={{ pointerEvents: 'none' }} />
