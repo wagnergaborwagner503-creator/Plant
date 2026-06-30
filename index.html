@@ -718,6 +718,7 @@
       { k: 'orchid', n: 'Orchidea (Phalaenopsis)', lat: 'Phalaenopsis', c: 'flower', light: 'bright', w: 7, f: 14, r: 24, hum: 'high', temp: [18, 28], tox: 0, diff: 'med', prune: 0, tip: 'Áztatásos öntözés; átlátszó cserép a gyökérnek.' },
       { k: 'geranium', n: 'Muskátli', lat: 'Pelargonium', c: 'flower', light: 'direct', w: 3, f: 14, r: 12, hum: 'low', temp: [10, 28], tox: 0, diff: 'easy', prune: 1, overwinter: { temp: [5, 10], note: 'fagyérzékeny – ősszel hozd be fagymentes, világos, hűvös helyre (5–10 °C), és csak ritkán öntözd; tavasszal a fagyok után viheted vissza.' }, tip: 'Sok virág sok fénynél; szárazságtűrő.' },
       { k: 'petunia', n: 'Petúnia', lat: 'Petunia', c: 'flower', light: 'direct', w: 2, f: 14, r: 0, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Az elnyílt virágokat csipkedd le.' },
+      { k: 'mossrose', n: 'Kukucsvirág (porcsinrózsa, moss rose)', lat: 'Portulaca grandiflora', c: 'flower', light: 'direct', w: 7, f: 30, r: 0, hum: 'low', temp: [10, 38], tox: 0, diff: 'easy', prune: 0, tip: 'Egynyári, pozsgás levelű virág (moss rose): teljes nap és száraz, homokos, jó vízelvezetésű talaj kell. Nagyon szárazságtűrő – ritkán öntözd. A virágok napsütésben nyílnak, borúban/este zárnak; magról könnyen elszaporodik.' },
       { k: 'cyclamen', n: 'Ciklámen', lat: 'Cyclamen persicum', c: 'flower', light: 'bright', w: 5, f: 21, r: 12, hum: 'med', temp: [10, 18], tox: 1, diff: 'med', prune: 0, tip: 'Hűvöskedvelő; alulról öntözd, a gumót ne.' },
       { k: 'poinsettia', n: 'Mikulásvirág', lat: 'Euphorbia pulcherrima', c: 'flower', light: 'bright', w: 6, f: 30, r: 0, hum: 'med', temp: [15, 24], tox: 1, diff: 'med', prune: 0, tip: 'Huzatra és hidegre érzékeny.' },
       { k: 'rose', n: 'Rózsa', lat: 'Rosa', c: 'flower', light: 'direct', w: 3, f: 21, r: 0, hum: 'low', temp: [10, 30], tox: 0, diff: 'med', prune: 2, tip: 'Tavaszi metszés; tőhöz öntözz, ne a levélre.' },
@@ -1025,6 +1026,10 @@
     /* ============================ SEGÉDEK ============================ */
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const cls = (...a) => a.filter(Boolean).join(' ');
+    // Ékezet- és kisbetű-érzéketlen kereséshez (pl. "venus" megtalálja a „Vénusz"-t)
+    const stripDia = s => (s == null ? '' : String(s)).toLowerCase()
+      .replace(/[áàâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i')
+      .replace(/[óòôöőõ]/g, 'o').replace(/[úùûüűũ]/g, 'u');
     const pad = n => String(n).padStart(2, '0');
     const dateToISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const todayISO = () => dateToISO(new Date());
@@ -1548,10 +1553,11 @@
         updateInv(id, patch) { setData(d => ({ ...d, inventory: (d.inventory || []).map(i => i.id === id ? { ...i, ...patch } : i) })); },
         deleteInv(id) { setData(d => ({ ...d, inventory: (d.inventory || []).filter(i => i.id !== id) })); },
         // Felhasznált cserép/kaspó (−1 db) és föld (−liter) levonása a leltárból
-        consumeInv({ potInvId, planterInvId, trayInvId, soilInvId, soilL }) {
+        consumeInv({ potInvId, planterInvId, trayInvId, soilInvId, soilL, potCount }) {
+          const pc = Math.max(1, Number(potCount) || 1); // egyszerre felhasznált cserepek száma (pl. lebomló cserép)
           setData(d => ({
             ...d, inventory: (d.inventory || []).map(i => {
-              if (potInvId && i.id === potInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
+              if (potInvId && i.id === potInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - pc) };
               if (planterInvId && i.id === planterInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
               if (trayInvId && i.id === trayInvId) return { ...i, qty: Math.max(0, (Number(i.qty) || 0) - 1) };
               if (soilInvId && i.id === soilInvId && soilL) return { ...i, qty: Math.max(0, Math.round(((Number(i.qty) || 0) - Number(soilL)) * 10) / 10) };
@@ -1850,7 +1856,7 @@
 
       const list = useMemo(() => {
         let arr = plants.map(p => ({ p, w: waterInfo(p, events), f: fertInfo(p, events) }));
-        if (q.trim()) { const s = q.toLowerCase(); arr = arr.filter(x => x.p.name.toLowerCase().includes(s) || (x.p.species || '').toLowerCase().includes(s) || (x.p.location || '').toLowerCase().includes(s)); }
+        if (q.trim()) { const s = stripDia(q); arr = arr.filter(x => stripDia(x.p.name).includes(s) || stripDia(x.p.species).includes(s) || stripDia(x.p.location).includes(s)); }
         if (filter === 'due') arr = arr.filter(x => x.w.state === 'overdue' || x.w.state === 'due');
         if (filter === 'fav') arr = arr.filter(x => x.p.favorite);
         if (sort === 'urgency') arr.sort((a, b) => urgencyKey(a.w) - urgencyKey(b.w));
@@ -2528,8 +2534,8 @@
       const { data, addPlant, updatePlant, deletePlant, consumeInv, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
       const [form, setForm] = useState(() => editing
-        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, trayInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
-        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, tray: '', trayInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, trayInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', potQty: (editing.pot && editing.pot.qty) || 1, city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
+        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potQty: 1, potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, tray: '', trayInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
       const inv = data.inventory || [];
       const invPots = inv.filter(i => i.cat === 'pot');
       const invSoils = inv.filter(i => i.cat === 'soil');
@@ -2551,9 +2557,9 @@
 
       const selectedSp = form.speciesKey ? SP_BY_KEY[form.speciesKey] : null;
       const spResults = useMemo(() => {
-        const q = spQuery.trim().toLowerCase();
+        const q = stripDia(spQuery.trim());
         let arr = PLANT_DB;
-        if (q) arr = arr.filter(s => s.n.toLowerCase().includes(q) || s.lat.toLowerCase().includes(q) || PLANT_CATS[s.c].label.toLowerCase().includes(q));
+        if (q) arr = arr.filter(s => stripDia(s.n).includes(q) || stripDia(s.lat).includes(q) || stripDia(PLANT_CATS[s.c].label).includes(q));
         return arr.slice(0, 50);
       }, [spQuery]);
       const pickSpecies = (s) => {
@@ -2584,16 +2590,16 @@
         if (!pot) {
           const hasDims = form.potShape === 'square' ? (form.potLen || form.potWid) : form.potDia;
           pot = (hasDims || form.potHt)
-            ? { shape: form.potShape || 'round', dia: (form.potShape !== 'square' && form.potDia) ? Number(form.potDia) : '', len: (form.potShape === 'square' && form.potLen) ? Number(form.potLen) : '', wid: (form.potShape === 'square' && form.potWid) ? Number(form.potWid) : '', ht: form.potHt ? Number(form.potHt) : '', invId: form.potInvId || null, potId: (editing && editing.pot && editing.pot.potId) || uid() }
+            ? { shape: form.potShape || 'round', dia: (form.potShape !== 'square' && form.potDia) ? Number(form.potDia) : '', len: (form.potShape === 'square' && form.potLen) ? Number(form.potLen) : '', wid: (form.potShape === 'square' && form.potWid) ? Number(form.potWid) : '', ht: form.potHt ? Number(form.potHt) : '', qty: Math.max(1, Number(form.potQty) || 1), invId: form.potInvId || null, potId: (editing && editing.pot && editing.pot.potId) || uid() }
             : ((editing && editing.pot) || null);
         }
         const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: soilL };
-        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potInvId', 'soilInvId', 'planterInvId', 'trayInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
+        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potQty', 'potInvId', 'soilInvId', 'planterInvId', 'trayInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
         if (editing) { updatePlant(editing.id, payload); toast('Mentve', '✅'); }
         else {
           addPlant(payload);
           if (deduct && (form.potInvId || form.planterInvId || form.trayInvId || (form.soilInvId && soilL))) {
-            consumeInv({ potInvId: form.potInvId, planterInvId: form.planterInvId, trayInvId: form.trayInvId, soilInvId: form.soilInvId, soilL });
+            consumeInv({ potInvId: form.potInvId, potCount: Number(form.potQty) || 1, planterInvId: form.planterInvId, trayInvId: form.trayInvId, soilInvId: form.soilInvId, soilL });
           }
           toast('Növény hozzáadva', '🌿');
         }
@@ -2753,6 +2759,14 @@
                     <div className="field" style={{ marginBottom: 0 }}><label>Magasság (cm)</label><input className="input" type="number" inputMode="numeric" value={form.potHt} placeholder="pl. 16" onChange={e => setPotField({ potHt: e.target.value, potInvId: null })} /></div>
                   </div>
                 )}
+                <div className="field" style={{ margin: '12px 0 0' }}>
+                  <label>Hány db ebből a cserépből? <span className="muted-3" style={{ fontWeight: 600 }}>· pl. lebomló cserépnél több is</span></label>
+                  <div className="stepper">
+                    <button type="button" onClick={() => set('potQty', Math.max(1, (Number(form.potQty) || 1) - 1))}>−</button>
+                    <input className="val" style={{ border: 'none', background: 'transparent', width: 60, textAlign: 'center' }} type="number" inputMode="numeric" value={form.potQty} onChange={e => set('potQty', e.target.value)} />
+                    <button type="button" onClick={() => set('potQty', (Number(form.potQty) || 1) + 1)}>+</button>
+                  </div>
+                </div>
                 <div className="field" style={{ margin: '12px 0 0' }}>
                   <label>Föld / közeg</label>
                   {invSoils.length > 0 && (
@@ -3013,10 +3027,10 @@
       const [sel, setSel] = useState(null);
 
       const results = useMemo(() => {
-        const s = q.trim().toLowerCase();
+        const s = stripDia(q.trim());
         let arr = PLANT_DB;
         if (cat !== 'all') arr = arr.filter(x => x.c === cat);
-        if (s) arr = arr.filter(x => x.n.toLowerCase().includes(s) || x.lat.toLowerCase().includes(s) || PLANT_CATS[x.c].label.toLowerCase().includes(s));
+        if (s) arr = arr.filter(x => stripDia(x.n).includes(s) || stripDia(x.lat).includes(s) || stripDia(PLANT_CATS[x.c].label).includes(s));
         return [...arr].sort((a, b) => a.n.localeCompare(b.n, 'hu'));
       }, [q, cat]);
 
@@ -3101,7 +3115,7 @@
     const INV_UNITS = ['db', 'l', 'kg', 'zsák', 'csomag', '—'];
 
     function InventoryView({ close }) {
-      const { data, addInv, updateInv, deleteInv, seedPotsFromPlants, toast } = useStore();
+      const { data, addInv, updateInv, deleteInv, toast } = useStore();
       const inv = data.inventory || [];
       const [editing, setEditing] = useState(null);
       const [form, setForm] = useState({ name: '', cat: 'pot', shape: 'round', dia: '', len: '', wid: '', ht: '', size: '', qty: 1, unit: 'db', notes: '' });
@@ -3121,7 +3135,6 @@
         if (editing === 'new') { addInv(item); toast('Hozzáadva a leltárhoz', '📦'); } else { updateInv(editing, item); toast('Mentve', '✅'); }
         setEditing(null);
       };
-      const seedFromPlants = () => { seedPotsFromPlants(); toast('Cserepek felvéve – pontosítsd a darabszámot', '🪴'); };
       const grouped = INV_CATS.map(c => ({ c, items: inv.filter(i => i.cat === c.key) })).filter(g => g.items.length);
       // Felhasznált (a növényekben lévő) cserepek és tálcák – a növényekből származtatva (közös cserép csak egyszer)
       const usedPots = useMemo(() => {
@@ -3129,10 +3142,11 @@
         (data.plants || []).forEach(p => {
           if (!(p.pot && potHasDims(p.pot))) return;
           const k = p.pot.potId || ('a' + (auto++));
-          (byId[k] = byId[k] || { label: potLabel(p.pot) || 'Cserép', names: [] }).names.push(p.name);
+          if (!byId[k]) byId[k] = { label: potLabel(p.pot) || 'Cserép', qty: Math.max(1, Number(p.pot.qty) || 1), names: [] };
+          byId[k].names.push(p.name);
         });
         const byLabel = {};
-        Object.values(byId).forEach(pot => { const g = (byLabel[pot.label] = byLabel[pot.label] || { label: pot.label, count: 0, names: [] }); g.count++; g.names.push(...pot.names); });
+        Object.values(byId).forEach(pot => { const g = (byLabel[pot.label] = byLabel[pot.label] || { label: pot.label, count: 0, names: [] }); g.count += pot.qty; g.names.push(...pot.names); });
         return Object.values(byLabel);
       }, [data.plants]);
       const usedTrays = useMemo(() => {
@@ -3203,9 +3217,6 @@
       return (
         <Sheet title="Kertészeti leltár" onClose={close}
           foot={<button className="btn btn-primary btn-block" onClick={startNew}><Icon name="plus" size={18} />Új tétel</button>}>
-          {data.plants.length > 0 && (
-            <button className="btn btn-ghost btn-block btn-sm" style={{ marginBottom: 14 }} onClick={seedFromPlants}><Icon name="leaf" size={15} />Jelenlegi növények cserepeinek felvétele</button>
-          )}
           {inv.length === 0 && !hasUsed ? (
             <div className="empty"><div style={{ fontSize: 30, marginBottom: 8 }}>📦</div><div className="empty-text">Még üres a leltár. Vedd fel a cserepeidet (átmérő × magasság), tálcáidat, földjeidet (hány liter), kaspóidat és eszközeidet – a darabszám utólag bármikor módosítható.</div></div>
           ) : (
