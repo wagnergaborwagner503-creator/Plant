@@ -18,6 +18,7 @@ Egyszerű, modern növénygondozó napló. Kövesd nyomon az **öntözést, táp
 - **🚚 Költöztetés / áttelelés előrejelzéssel** — az áttelelést igénylő növényeknél (eper, citrom, füge, muskátli, rozmaring, ananász…) az app **dátumra előre jelzi**, mikor és **hova** vidd (ősszel a hűvös/fagymentes pihenőhelyre – pl. garázs 0–5 °C –, tavasszal vissza a helyére). A „Megfigyelés" esemény helyett mostantól **Költöztetés** rögzíthető.
 - **🖌️ Kézi beporzás előrejelzéssel** — a beltéri, kézi beporzást igénylő növényeknél (paradicsom, paprika, uborka, eper, citrus…) a virágzási hónapokban előre jelzi, **mikor és hogyan** porozd be. A „Levéltisztítás" esemény helyett mostantól **Beporzás** rögzíthető.
 - **🌦️ Időjárás-alapú öntözés (Open-Meteo)** — a **kinti** növényeknél megadhatsz egy **települést**, és az app minden belépéskor lekéri a **pillanatnyi hőmérsékletet** + 4 napos előrejelzést. A növény profilján kiírja a helyszín aktuális fokát (pl. *„📍 Szeged · 39°C, ma max 40°C"*). A hőmérséklet alapján számolja az öntözést: **melegben gyorsabban szárad a föld → sűrűbb öntözés** (pl. 39 °C-os hőségben az epernél 3 helyett ~1 naponta), eső után ritkábban – mindez bekerül az ütemezésbe (a naptárba és a kártya-jelzőkbe is), szerver nélkül, a böngészőből.
+- **🫙 Gyökereztetés vízben (dugvány)** — új növénynél bekapcsolható; beállíthatod, **hány hétig** gyökerezzen. A Tudástárban a vízben gyökereztethető fajoknál (aranyinda, monstera, filodendron, pletyka, borostyán, menta, bazsalikom…) szerepel az **ajánlott hetek száma**, amit az app rögzítéskor automatikusan beír (≈ napokban). A növény kártyáján és profilján visszaszámol: **„Gyökereztetés: még X nap"**, a végén **„Kigyökerezett – kiültethető"** (egy gombbal lezárható).
 - **🏠 Bent / 🌳 Kint** beállítás növényenként – ehhez igazodnak a tippek, a beporzás, a költöztetés és az időjárás-alapú öntözés.
 - **🔢 Kártya-jelzők** — a növénykártya fotóján bal felül 💧 + szám (öntözésig hátralévő nap), jobb felül 🌿 + szám (tápoldatig), állapot szerinti színnel.
 - **📦 Kertészeti leltár** (Beállítások → Otthonom és felszerelésem → Kertészeti leltár) — vezesd, milyen cserepeid (**kerek** = átmérő × magasság, vagy **négyzetes** = hossz × szélesség × magasság), **tálcáid**, földjeid (hány liter), kaspóid, eszközeid, tápoldataid vannak. A leltár **külön mutatja a szabad és a (növényekben) felhasznált** cserepeket és tálcákat. Új növénynél / **átültetésnél** kiválaszthatod a cserepet és a földet a leltárból: a **felhasznált föld mennyiségét a cserép méretéből automatikusan megbecsüli** (utólag módosíthatod), majd **levonja a cserepet/tálcát és a földet**, átültetéskor pedig a **régi cserepet visszateszi** a leltárba. **Egy cserépbe több növény** is ültethető („közös cserép" – ilyenkor a leltár nem változik, és a felhasznált listában egyszer számít). Megadhatod azt is, **hány db cserepet használtál fel egyszerre** (pl. apró, lebomló cserépnél több) – az app annyit von le a leltárból.
@@ -67,9 +68,11 @@ A **Beállítások → Értesítések → Bekapcsolás** gombbal kapcsolhatod be
 
 ## 💾 Adatok és biztonsági mentés
 
-- Minden adat **ezen az egy eszközön**, a böngészőben tárolódik.
-- Ha törlöd az appot, vagy üríted a böngésző adatait, a napló is törlődik.
-- Ezért időnként a **Beállítások → Mentés exportálása** gombbal készíts JSON biztonsági mentést. Ugyanitt a **Visszatöltés** gombbal állíthatod vissza (vagy viheted át másik eszközre).
+- Minden adat **ezen az egy eszközön**, a böngészőben tárolódik (localStorage + IndexedDB biztonsági másolat, önjavítással).
+- ⚠️ **A böngésző idővel törölheti a nem védett tárhelyet** (főleg iPhone Safariban, ha az app NINCS a kezdőképernyőre telepítve – ilyenkor akár újraindításkor is eltűnhet minden). **Ez a leggyakoribb oka az adatvesztésnek.**
+  - **Megoldás:** telepítsd az appot a **kezdőképernyőre** (Android Chrome: ⋮ → „Alkalmazás telepítése"; iPhone Safari: Megosztás → „Add to Home Screen"). Telepített appként a tárhely tartós, és nem törlődik magától.
+  - Ha a tárhely nincs védve, az app **figyelmeztető sávot** mutat a tetején, egy „Mentés most" gombbal.
+- Emellett időnként a **Beállítások → Mentés exportálása** gombbal készíts JSON biztonsági mentést (a Letöltések mappába kerül, és túléli a böngésző-ürítést is). A **Visszatöltés** gombbal állíthatod vissza (vagy viheted át másik eszközre).
 
 ---
 

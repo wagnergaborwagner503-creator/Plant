@@ -1,5 +1,5 @@
-// Palánta – Service Worker v14
-const CACHE = 'palanta-v14';
+// Palánta – Service Worker v15
+const CACHE = 'palanta-v15';
 
 // Telepítéskor azonnal átveszi az irányítást
 self.addEventListener('install', () => self.skipWaiting());

@@ -625,10 +625,10 @@
     // (a kevésbé ismert fajok a plantdb.js-ben "a: archetípus" mezővel öröklik a tipikus gondozást)
     const PLANT_DB_RAW = [
       // — Szobanövények —
-      { k: 'monstera', n: 'Monstera', lat: 'Monstera deliciosa', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Mohaoszlopot/karót szeret; töröld le a leveleit a portól.' },
+      { k: 'monstera', n: 'Monstera', lat: 'Monstera deliciosa', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, rootWeeks: 5, tip: 'Mohaoszlopot/karót szeret; töröld le a leveleit a portól.' },
       { k: 'monstera_adansonii', n: 'Lyuklevél monstera', lat: 'Monstera adansonii', c: 'house', light: 'bright', w: 7, f: 30, r: 18, hum: 'high', temp: [18, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Kapaszkodik; magasabb párát kedvel.' },
-      { k: 'pothos', n: 'Aranyinda', lat: 'Epipremnum aureum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'low', temp: [16, 26], tox: 1, diff: 'easy', prune: 1, tip: 'Szinte elpusztíthatatlan; vízben is gyökereztethető.' },
-      { k: 'philodendron', n: 'Filodendron', lat: 'Philodendron hederaceum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Gyors növekedő, hálás szobanövény.' },
+      { k: 'pothos', n: 'Aranyinda', lat: 'Epipremnum aureum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'low', temp: [16, 26], tox: 1, diff: 'easy', prune: 1, rootWeeks: 3, tip: 'Szinte elpusztíthatatlan; vízben is gyökereztethető.' },
+      { k: 'philodendron', n: 'Filodendron', lat: 'Philodendron hederaceum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, rootWeeks: 3, tip: 'Gyors növekedő, hálás szobanövény; vízben könnyen gyökereztethető.' },
       { k: 'sansevieria', n: 'Anyósnyelv', lat: 'Sansevieria trifasciata', c: 'house', light: 'low', w: 14, f: 45, r: 36, hum: 'low', temp: [15, 29], tox: 1, diff: 'easy', prune: 0, tip: 'Ritkán öntözd, télen alig; túlöntözésre rohad.' },
       { k: 'zz', n: 'ZZ-növény', lat: 'Zamioculcas zamiifolia', c: 'house', light: 'low', w: 14, f: 60, r: 24, hum: 'low', temp: [16, 26], tox: 1, diff: 'easy', prune: 0, tip: 'Tűri az árnyékot és a szárazságot.' },
       { k: 'ficus_elastica', n: 'Gumifa', lat: 'Ficus elastica', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [16, 28], tox: 1, diff: 'easy', prune: 1, tip: 'Töröld a leveleit; nem szereti a huzatot.' },
@@ -642,14 +642,14 @@
       { k: 'calathea', n: 'Kalatea', lat: 'Calathea / Goeppertia', c: 'house', light: 'medium', w: 5, f: 45, r: 18, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Magas párát és állott/esővizet igényel.' },
       { k: 'maranta', n: 'Imádkozó növény', lat: 'Maranta leuconeura', c: 'house', light: 'medium', w: 5, f: 45, r: 18, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Este felcsukja a leveleit.' },
       { k: 'anthurium', n: 'Flamingóvirág', lat: 'Anthurium andraeanum', c: 'house', light: 'bright', w: 6, f: 30, r: 18, hum: 'high', temp: [18, 28], tox: 1, diff: 'med', prune: 0, tip: 'Magas pára kell a folyamatos virágzáshoz.' },
-      { k: 'hedera', n: 'Borostyán', lat: 'Hedera helix', c: 'house', light: 'medium', w: 7, f: 45, r: 18, hum: 'med', temp: [10, 22], tox: 1, diff: 'easy', prune: 1, tip: 'Hűvösebb helyet kedvel; permetezhető.' },
-      { k: 'tradescantia', n: 'Pletyka', lat: 'Tradescantia zebrina', c: 'house', light: 'bright', w: 6, f: 30, r: 12, hum: 'med', temp: [15, 26], tox: 1, diff: 'easy', prune: 1, tip: 'Csípd vissza a dúsabb forma érdekében.' },
+      { k: 'hedera', n: 'Borostyán', lat: 'Hedera helix', c: 'house', light: 'medium', w: 7, f: 45, r: 18, hum: 'med', temp: [10, 22], tox: 1, diff: 'easy', prune: 1, rootWeeks: 4, tip: 'Hűvösebb helyet kedvel; permetezhető. Dugványa vízben gyökereztethető.' },
+      { k: 'tradescantia', n: 'Pletyka', lat: 'Tradescantia zebrina', c: 'house', light: 'bright', w: 6, f: 30, r: 12, hum: 'med', temp: [15, 26], tox: 1, diff: 'easy', prune: 1, rootWeeks: 2, tip: 'Csípd vissza a dúsabb forma érdekében; vízben gyorsan gyökerezik.' },
       { k: 'peperomia', n: 'Peperómia', lat: 'Peperomia', c: 'house', light: 'medium', w: 9, f: 45, r: 24, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Pozsgás levelek – ritkábban öntözd.' },
       { k: 'pilea', n: 'Békalevél', lat: 'Pilea peperomioides', c: 'house', light: 'bright', w: 7, f: 30, r: 18, hum: 'low', temp: [15, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Forgasd a fény felé az egyenletes formáért.' },
       { k: 'schefflera', n: 'Sugáraralia', lat: 'Schefflera arboricola', c: 'house', light: 'bright', w: 7, f: 30, r: 24, hum: 'med', temp: [16, 24], tox: 1, diff: 'easy', prune: 1, tip: 'Metszéssel szépen sűríthető.' },
       { k: 'yucca', n: 'Jukka', lat: 'Yucca elephantipes', c: 'house', light: 'direct', w: 12, f: 45, r: 36, hum: 'low', temp: [12, 27], tox: 1, diff: 'easy', prune: 0, tip: 'Sok fény, kevés víz.' },
       { k: 'croton', n: 'Kroton', lat: 'Codiaeum variegatum', c: 'house', light: 'bright', w: 6, f: 30, r: 18, hum: 'high', temp: [18, 27], tox: 1, diff: 'med', prune: 0, tip: 'Erős fény kell az élénk színekhez.' },
-      { k: 'syngonium', n: 'Nyíllevél', lat: 'Syngonium podophyllum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, tip: 'Kapaszkodó vagy függő is lehet.' },
+      { k: 'syngonium', n: 'Nyíllevél', lat: 'Syngonium podophyllum', c: 'house', light: 'medium', w: 7, f: 30, r: 18, hum: 'med', temp: [16, 27], tox: 1, diff: 'easy', prune: 1, rootWeeks: 3, tip: 'Kapaszkodó vagy függő is lehet; vízben gyökereztethető.' },
       { k: 'hoya', n: 'Viaszvirág', lat: 'Hoya carnosa', c: 'house', light: 'bright', w: 10, f: 45, r: 36, hum: 'med', temp: [16, 27], tox: 0, diff: 'easy', prune: 0, tip: 'Virágzáskor ne mozgasd; ritkán ültesd át.' },
       { k: 'fittonia', n: 'Mozaiknövény', lat: 'Fittonia albivenis', c: 'house', light: 'medium', w: 4, f: 45, r: 12, hum: 'high', temp: [18, 26], tox: 0, diff: 'med', prune: 0, tip: 'Szárazon azonnal lekókad; pára kell.' },
       { k: 'begonia_rex', n: 'Levélbegónia', lat: 'Begonia rex', c: 'house', light: 'medium', w: 6, f: 30, r: 18, hum: 'high', temp: [16, 24], tox: 1, diff: 'med', prune: 0, tip: 'A tövét öntözd, a leveleit ne permetezd.' },
@@ -680,17 +680,17 @@
       { k: 'kentia', n: 'Kentia pálma', lat: 'Howea forsteriana', c: 'palm', light: 'medium', w: 8, f: 45, r: 36, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Tűri a kevesebb fényt; lassan nő.' },
       { k: 'chamaedorea', n: 'Hegyipálma', lat: 'Chamaedorea elegans', c: 'palm', light: 'medium', w: 7, f: 45, r: 24, hum: 'med', temp: [16, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Kompakt, jó választás kezdőknek.' },
       // — Fűszernövények —
-      { k: 'basil', n: 'Bazsalikom', lat: 'Ocimum basilicum', c: 'herb', light: 'direct', w: 2, f: 21, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'easy', prune: 1, tip: 'Csípd a tetejét a dús bokrosodásért; sok fény + víz.' },
+      { k: 'basil', n: 'Bazsalikom', lat: 'Ocimum basilicum', c: 'herb', light: 'direct', w: 2, f: 21, r: 0, hum: 'med', temp: [18, 30], tox: 0, diff: 'easy', prune: 1, rootWeeks: 2, tip: 'Csípd a tetejét a dús bokrosodásért; sok fény + víz. A hajtás vízben legyökerezik.' },
       { k: 'parsley', n: 'Petrezselyem', lat: 'Petroselinum crispum', c: 'herb', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [10, 24], tox: 0, diff: 'easy', prune: 0, tip: 'Kívülről befelé szedd a szárakat.' },
       { k: 'rosemary', n: 'Rozmaring', lat: 'Salvia rosmarinus', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'med', prune: 1, overwinter: { temp: [3, 10], note: 'félig fagytűrő – tartós fagy elől vidd fényes, hűvös helyre (pl. hideg veranda, télikert), és csak ritkán öntözd.' }, tip: 'Mediterrán – ne öntözd túl.' },
       { k: 'thyme', n: 'Kakukkfű', lat: 'Thymus vulgaris', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [10, 27], tox: 0, diff: 'easy', prune: 1, tip: 'Száraz, napos helyet szeret.' },
       { k: 'oregano', n: 'Oregánó', lat: 'Origanum vulgare', c: 'herb', light: 'direct', w: 5, f: 45, r: 24, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Virágzás előtt a legaromásabb.' },
-      { k: 'mint', n: 'Menta', lat: 'Mentha', c: 'herb', light: 'bright', w: 2, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Terjeszkedő – tartsd külön cserépben!' },
+      { k: 'mint', n: 'Menta', lat: 'Mentha', c: 'herb', light: 'bright', w: 2, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, rootWeeks: 1, tip: 'Terjeszkedő – tartsd külön cserépben! Vízben pár nap alatt gyökerezik.' },
       { k: 'chives', n: 'Snidling', lat: 'Allium schoenoprasum', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [10, 25], tox: 0, diff: 'easy', prune: 0, tip: 'Ollóval vágd vissza, újrahajt.' },
       { k: 'cilantro', n: 'Koriander', lat: 'Coriandrum sativum', c: 'herb', light: 'bright', w: 3, f: 30, r: 0, hum: 'med', temp: [12, 24], tox: 0, diff: 'med', prune: 0, tip: 'Hőségben gyorsan magszárba szökik.' },
       { k: 'sage', n: 'Zsálya', lat: 'Salvia officinalis', c: 'herb', light: 'direct', w: 6, f: 45, r: 24, hum: 'low', temp: [12, 28], tox: 0, diff: 'easy', prune: 1, tip: 'Száraz, napos hely; jó vízelvezetés.' },
       { k: 'dill', n: 'Kapor', lat: 'Anethum graveolens', c: 'herb', light: 'direct', w: 3, f: 30, r: 0, hum: 'low', temp: [12, 26], tox: 0, diff: 'easy', prune: 0, tip: 'Mély cserép kell a karógyökérnek.' },
-      { k: 'lemonbalm', n: 'Citromfű', lat: 'Melissa officinalis', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, tip: 'Citromos illat; teának is kiváló.' },
+      { k: 'lemonbalm', n: 'Citromfű', lat: 'Melissa officinalis', c: 'herb', light: 'bright', w: 3, f: 30, r: 12, hum: 'med', temp: [12, 26], tox: 0, diff: 'easy', prune: 1, rootWeeks: 2, tip: 'Citromos illat; teának is kiváló. Vízben gyorsan gyökerezik.' },
       { k: 'lavender', n: 'Levendula', lat: 'Lavandula', c: 'herb', light: 'direct', w: 7, f: 45, r: 24, hum: 'low', temp: [5, 30], tox: 0, diff: 'med', prune: 1, tip: 'Napos, jó vízelvezetésű talaj; virágzás után metszd.' },
       // — Zöldségek —
       { k: 'tomato', n: 'Paradicsom', lat: 'Solanum lycopersicum', c: 'veg', light: 'direct', w: 2, f: 14, r: 0, hum: 'med', temp: [15, 30], tox: 0, diff: 'med', prune: 1, bloomMonths: [6, 8], pollinate: 'virágzáskor naponta finoman rázd meg a növényt (vagy ecsettel), hogy a pollen kihulljon – beltéren nincs szél/rovar, ami beporozná.', tip: 'Kacsozd; karó/kalitka kell; egyenletesen öntözd.' },
@@ -1008,6 +1008,7 @@
       if (sp.hum === 'high') tips.push({ e: '💨', t: 'Magas párát szeret – ' + (tools.humidifier ? 'a párásítód ideális hozzá.' : (tools.sprayer ? 'permetezd rendszeresen.' : 'permetező vagy párásító ajánlott.')) });
       if (sp.r > 0) tips.push({ e: '🪴', t: 'Átültetés kb. ' + repotText(sp.r) + ', amikor kinövi a cserepét' + ((tools.pots || tools.planters) ? '.' : ' – ehhez nagyobb cserépre lesz szükséged.') });
       if (sp.prune >= 1) tips.push({ e: '✂️', t: (sp.prune === 2 ? 'Rendszeres metszést igényel. ' : 'Időnként visszametszhető. ') + (tools.pruner ? 'A metszőollód jó lesz hozzá.' : 'Metszőolló ajánlott hozzá.') });
+      if (sp.rootWeeks) tips.push({ e: '🫙', t: 'Dugványról, vízben kb. ' + sp.rootWeeks + ' hét alatt gyökerezik – utána földbe ültetheted. (Új növénynél bekapcsolhatod a „Gyökereztetés" módot.)' });
       if (sp.overwinter) tips.push({ e: '🥶', t: 'Áttelelés: ' + sp.overwinter.note });
       if (sp.pollinate) {
         if (placement === 'indoor') tips.push({ e: '🖌️', t: 'Beltéren kézzel kell beporozni: ' + sp.pollinate });
@@ -1138,6 +1139,13 @@
       let state = 'ok';
       if (daysUntil < 0) state = 'overdue'; else if (daysUntil === 0) state = 'due'; else if (daysUntil <= 2) state = 'soon';
       return { state, last, due, daysUntil };
+    }
+    // Gyökereztetés vízben – hátralévő napok
+    function rootingInfo(plant) {
+      if (!plant.rooting || !plant.rooting.start || !plant.rooting.weeks) return null;
+      const total = plant.rooting.weeks * 7;
+      const elapsed = Math.max(0, daysBetween(plant.rooting.start, todayISO()));
+      return { total, elapsed, left: total - elapsed, weeks: plant.rooting.weeks, done: elapsed >= total, pct: Math.max(0, Math.min(100, Math.round(elapsed / total * 100))) };
     }
     // ---- Évszak-érzékeny ütemezés ----
     const MONTH_SEASON = m => (m >= 3 && m <= 5) ? 'spring' : (m >= 6 && m <= 8) ? 'summer' : (m >= 9 && m <= 11) ? 'autumn' : 'winter';
@@ -1547,6 +1555,7 @@
         deleteEvent(id) { setData(d => ({ ...d, events: d.events.filter(e => e.id !== id) })); },
         setTheme(theme) { setData(d => ({ ...d, settings: { ...d.settings, theme } })); },
         setNotif(patch) { setData(d => ({ ...d, settings: { ...d.settings, notif: { ...(d.settings.notif || {}), ...patch } } })); },
+        setSettings(patch) { setData(d => ({ ...d, settings: { ...d.settings, ...patch } })); },
         updateEvent(id, patch) { setData(d => ({ ...d, events: d.events.map(e => e.id === id ? { ...e, ...patch } : e) })); },
         toggleKit(group, key) { setData(d => { const kit = d.settings.kit || { places: {}, tools: {} }; const g = { ...(kit[group] || {}) }; g[key] = !g[key]; return { ...d, settings: { ...d.settings, kit: { ...kit, [group]: g } } }; }); },
         addInv(item) { const it = { id: uid(), ...item }; setData(d => ({ ...d, inventory: [...(d.inventory || []), it] })); return it; },
@@ -1918,6 +1927,7 @@
       const fc = STATE_META[(f && f.state) || 'none'].color;
       const sp = spOf(plant);
       const common = sp ? sp.n : (plant.species || '');   // magyar köznapi fajtanév (pl. Eper, Alma, Ananász) – nem a latin
+      const rInfo = rootingInfo(plant);
       return (
         <div className="pcard" style={{ animationDelay: (idx * 0.04) + 's' }}>
           <div className="pcard-photo" onClick={onOpen}>
@@ -1931,8 +1941,9 @@
               {common && common !== plant.name && <div className="pcard-species">{common}</div>}
             </div>
             <div className="pcard-meta">
-              <Icon name="drop" size={13} style={{ color: 'var(--water)' }} />
-              Utoljára: {relPast(w.last)}
+              {rInfo
+                ? <React.Fragment><span style={{ fontSize: 13 }}>🫙</span>{rInfo.done ? 'Kigyökerezett – kiültethető' : `Gyökereztetés: ${rInfo.left} nap`}</React.Fragment>
+                : <React.Fragment><Icon name="drop" size={13} style={{ color: 'var(--water)' }} />Utoljára: {relPast(w.last)}</React.Fragment>}
             </div>
             <div className="pcard-actions">
               <button className="pcard-water" onClick={onWater}><Icon name="drop" size={15} />Öntözés</button>
@@ -1945,7 +1956,7 @@
 
     /* ============================ NÖVÉNY RÉSZLETEK ============================ */
     function PlantDetail({ plantId, back, edit, editEvent, logFor, repot }) {
-      const { data, addEvent, deleteEvent, toggleFav, toast, weatherVersion } = useStore();
+      const { data, addEvent, deleteEvent, toggleFav, updatePlant, toast, weatherVersion } = useStore();
       const plant = data.plants.find(p => p.id === plantId);
       const events = useMemo(() => data.events.filter(e => e.plantId === plantId).sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)), [data.events, plantId]);
       if (!plant) { back(); return null; }
@@ -1957,6 +1968,7 @@
       const nextMove = nextMoveWithin(plant, data.events, -14, 30);
       const pollNow = pollinateActive(plant, data.events);
       const isOutdoor = (plant.placement || 'indoor') === 'outdoor';
+      const rootInfo = rootingInfo(plant);
       const wfactor = weatherFactorFor(plant);
       const effWaterInterval = plant.waterIntervalDays ? Math.max(1, Math.round(plant.waterIntervalDays * waterMult(plant, seasonNow()) * wfactor)) : null;
       const potMates = (plant.pot && plant.pot.potId) ? data.plants.filter(p => p.id !== plantId && p.pot && p.pot.potId === plant.pot.potId) : [];
@@ -2017,6 +2029,19 @@
             </div>
           </div>
 
+          {rootInfo && (
+            <div className="care-card" style={{ marginBottom: 14, borderColor: rootInfo.done ? 'var(--ok)' : 'var(--water)' }}>
+              <div className="row" style={{ gap: 12 }}>
+                <span style={{ fontSize: 26, flexShrink: 0 }}>🫙</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, fontFamily: 'var(--display)', fontSize: 16, color: rootInfo.done ? 'var(--ok)' : 'var(--water)' }}>{rootInfo.done ? 'Gyökereztetés kész – kiültethető! 🌱' : `Gyökereztetés: még ${rootInfo.left} nap`}</div>
+                  <div className="muted-3" style={{ fontSize: 12, marginTop: 2 }}>{rootInfo.weeks} hét vízben · {rootInfo.elapsed}/{rootInfo.total} nap</div>
+                  <div className="progress" style={{ marginTop: 8 }}><div style={{ width: rootInfo.pct + '%', background: rootInfo.done ? 'var(--ok)' : 'var(--water)' }} /></div>
+                </div>
+              </div>
+              <button className="btn btn-soft btn-sm" style={{ marginTop: 12 }} onClick={() => { updatePlant(plantId, { rooting: null }); toast(rootInfo.done ? 'Kiültetve – gyökereztetés lezárva' : 'Gyökereztetés leállítva', '🌱'); }}><Icon name="check" size={15} />{rootInfo.done ? 'Kiültettem (földbe)' : 'Kész / leállítom'}</button>
+            </div>
+          )}
           {isOutdoor && (
             plant.city ? (w.weather ? (
               <div className="care-card" style={{ marginBottom: 14 }}>
@@ -2338,7 +2363,8 @@
 
     /* ============================ BEÁLLÍTÁSOK ============================ */
     function SettingsView({ openKB, openInv }) {
-      const { data, setTheme, setNotif, toggleKit, importData, resetData, toast } = useStore();
+      const { data, setTheme, setNotif, toggleKit, setSettings, importData, resetData, toast } = useStore();
+      const autoBackupOn = !!(data.settings && data.settings.autoBackup);
       const kitPlaces = (data.settings.kit && data.settings.kit.places) || {};
       const kitTools = (data.settings.kit && data.settings.kit.tools) || {};
       const fileRef = useRef(null);
@@ -2490,6 +2516,11 @@
               <div className="set-main"><div className="set-title">Adatok védelme</div><div className="set-sub">{persisted === true ? 'Tartós tárolás bekapcsolva – a böngésző nem törli magától.' : persisted === false ? 'Nincs védve – koppints a bekapcsoláshoz.' : 'Ellenőrzés…'}</div></div>
               {persisted === false && <button className="btn btn-soft btn-sm" onClick={requestPersist}>Bekapcsol</button>}
             </div>
+            <div className="set-row">
+              <div className="set-ic" style={{ color: 'var(--water)' }}><Icon name="download" size={20} /></div>
+              <div className="set-main"><div className="set-title">Automatikus napi mentés</div><div className="set-sub">Naponta egyszer letölt egy JSON mentést a Letöltésekbe – ez a böngésző-ürítést is túléli.</div></div>
+              <button className={cls('switch', autoBackupOn && 'on')} onClick={() => { setSettings({ autoBackup: !autoBackupOn }); toast(autoBackupOn ? 'Automatikus mentés ki' : 'Automatikus mentés be', autoBackupOn ? '🔕' : '🛟'); }} aria-label="Automatikus mentés kapcsolása" />
+            </div>
           </div>
           <div className="muted-3" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 22, padding: '0 4px' }}>
             ⚠️ Minden adat kizárólag ezen az eszközön tárolódik (böngésző). Az app törlése vagy a böngészőadatok ürítése törli a naplót — érdemes időnként mentést exportálni.
@@ -2534,8 +2565,8 @@
       const { data, addPlant, updatePlant, deletePlant, consumeInv, toast } = useStore();
       const editing = data.plants.find(p => p.id === plantId);
       const [form, setForm] = useState(() => editing
-        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, trayInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', potQty: (editing.pot && editing.pot.qty) || 1, city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
-        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potQty: 1, potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, tray: '', trayInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
+        ? { soilUsedL: '', potInvId: null, soilInvId: null, planterInvId: null, trayInvId: null, deductInv: false, soilTouched: true, potMode: 'own', sharePlantId: '', rootMode: !!(editing && editing.rooting), rootWeeks: (editing && editing.rooting && editing.rooting.weeks) || '', potQty: (editing.pot && editing.pot.qty) || 1, city: editing.city || '', potShape: (editing.pot && editing.pot.shape) || 'round', potDia: (editing.pot && editing.pot.dia) || '', potLen: (editing.pot && editing.pot.len) || '', potWid: (editing.pot && editing.pot.wid) || '', potHt: (editing.pot && editing.pot.ht) || '', ...editing }
+        : { name: '', species: '', speciesKey: null, location: '', placement: 'indoor', city: '', light: 'bright', potSize: '', potShape: 'round', potDia: '', potLen: '', potWid: '', potHt: '', potQty: 1, potInvId: null, soil: '', soilUsedL: '', soilTouched: false, soilInvId: null, planter: '', planterInvId: null, tray: '', trayInvId: null, deductInv: true, potMode: 'own', sharePlantId: '', rootMode: false, rootWeeks: '', photo: null, waterIntervalDays: 7, fertilizeIntervalDays: 30, notes: '' });
       const inv = data.inventory || [];
       const invPots = inv.filter(i => i.cat === 'pot');
       const invSoils = inv.filter(i => i.cat === 'soil');
@@ -2593,8 +2624,9 @@
             ? { shape: form.potShape || 'round', dia: (form.potShape !== 'square' && form.potDia) ? Number(form.potDia) : '', len: (form.potShape === 'square' && form.potLen) ? Number(form.potLen) : '', wid: (form.potShape === 'square' && form.potWid) ? Number(form.potWid) : '', ht: form.potHt ? Number(form.potHt) : '', qty: Math.max(1, Number(form.potQty) || 1), invId: form.potInvId || null, potId: (editing && editing.pot && editing.pot.potId) || uid() }
             : ((editing && editing.pot) || null);
         }
-        const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: soilL };
-        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potQty', 'potInvId', 'soilInvId', 'planterInvId', 'trayInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId'].forEach(k => delete payload[k]);
+        const rooting = form.rootMode ? { start: (editing && editing.rooting && editing.rooting.start) || todayISO(), weeks: Math.max(1, Number(form.rootWeeks) || (selectedSp && selectedSp.rootWeeks) || 3) } : null;
+        const payload = { ...form, pot, potSize: potLabel(pot) || form.potSize || '', soilUsedL: soilL, rooting };
+        ['potShape', 'potDia', 'potLen', 'potWid', 'potHt', 'potQty', 'potInvId', 'soilInvId', 'planterInvId', 'trayInvId', 'deductInv', 'soilTouched', 'potMode', 'sharePlantId', 'rootMode', 'rootWeeks'].forEach(k => delete payload[k]);
         if (editing) { updatePlant(editing.id, payload); toast('Mentve', '✅'); }
         else {
           addPlant(payload);
@@ -2654,6 +2686,24 @@
               ))}
             </div>
           )}
+
+          <div className="field">
+            <button type="button" className="kit-chip" style={{ width: '100%', justifyContent: 'space-between' }} onClick={() => setForm(f => { const on = !f.rootMode; return { ...f, rootMode: on, rootWeeks: on ? (f.rootWeeks || (selectedSp && selectedSp.rootWeeks) || 3) : f.rootWeeks }; })}>
+              <span>🫙 Gyökereztetés vízben (dugvány)</span>
+              <span className={cls('switch', form.rootMode && 'on')} style={{ pointerEvents: 'none' }} />
+            </button>
+            {form.rootMode && (
+              <div style={{ marginTop: 10 }}>
+                <div className="field-label" style={{ marginBottom: 7 }}>Hány hétig gyökerezzen?{selectedSp && selectedSp.rootWeeks ? ` · ajánlott: ${selectedSp.rootWeeks} hét` : ''}</div>
+                <div className="stepper">
+                  <button type="button" onClick={() => set('rootWeeks', Math.max(1, (Number(form.rootWeeks) || 1) - 1))}>−</button>
+                  <input className="val" style={{ border: 'none', background: 'transparent', width: 60, textAlign: 'center' }} type="number" inputMode="numeric" value={form.rootWeeks} onChange={e => set('rootWeeks', e.target.value)} />
+                  <button type="button" onClick={() => set('rootWeeks', (Number(form.rootWeeks) || 1) + 1)}>+</button>
+                </div>
+                <div className="muted-3" style={{ fontSize: 11.5, lineHeight: 1.5, marginTop: 7 }}>≈ {(Number(form.rootWeeks) || 0) * 7} nap a vízben. A növény oldalán látod majd, hány nap van hátra a gyökereztetésből.</div>
+              </div>
+            )}
+          </div>
 
           <div className="photo-pick" onClick={() => fileRef.current.click()}>
             {form.photo ? <React.Fragment>
@@ -3369,6 +3419,73 @@
       );
     }
 
+    /* ============================ ADATVÉDELMI FIGYELMEZTETÉS ============================ */
+    // Ha a böngésző NEM garantálja a tartós tárolást (pl. nem telepített app, iPhone Safari), az adat idővel/kilépéskor törlődhet.
+    function DataGuardBanner() {
+      const { data, toast } = useStore();
+      const [persisted, setPersisted] = useState(null);
+      const [dismissed, setDismissed] = useState(false);
+      useEffect(() => {
+        let dead = false;
+        const check = () => {
+          if (navigator.storage && navigator.storage.persisted) {
+            navigator.storage.persisted().then(p => {
+              if (dead) return;
+              setPersisted(p);
+              if (!p && navigator.storage.persist) navigator.storage.persist().then(g => { if (!dead) setPersisted(g); }).catch(() => {});
+            }).catch(() => { if (!dead) setPersisted(false); });
+          } else setPersisted(false); // nem támogatott (pl. iOS Safari) → figyelmeztessünk
+        };
+        check();
+        const onVis = () => { if (document.visibilityState === 'visible') check(); };
+        document.addEventListener('visibilitychange', onVis);
+        return () => { dead = true; document.removeEventListener('visibilitychange', onVis); };
+      }, []);
+      const exportBackup = () => {
+        try {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob); const a = document.createElement('a');
+          a.href = url; a.download = `palanta-mentes-${todayISO()}.json`; a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Mentés letöltve', '💾');
+        } catch (e) { toast('Nem sikerült a mentés', '⚠️'); }
+      };
+      if (persisted !== false || dismissed || (data.plants || []).length === 0) return null;
+      return (
+        <div style={{ background: 'color-mix(in srgb, var(--soon) 16%, var(--surface))', borderBottom: '1px solid color-mix(in srgb, var(--soon) 40%, transparent)', padding: '11px 16px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', maxWidth: 1180, margin: '0 auto' }}>
+            <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>Az adataid <b>nincsenek védve</b> a böngésző általi törléstől – ezért tűnhettek el újraindításkor. <b>Telepítsd az appot a kezdőképernyőre</b> (böngészőmenü → „Alkalmazás telepítése" / „Hozzáadás a kezdőképernyőhöz"), és időnként ments!</div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 9 }}>
+                <button className="btn btn-primary btn-sm" onClick={exportBackup}><Icon name="download" size={14} />Mentés most</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setDismissed(true)}>Elrejt</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Automatikus napi mentés (opcionális): a Letöltésekbe ment egy JSON-t, ami a böngésző-ürítést is túléli
+    function AutoBackup() {
+      const { data, setSettings } = useStore();
+      useEffect(() => {
+        const s = data.settings || {};
+        if (!s.autoBackup || (data.plants || []).length === 0 || s.lastAutoBackup === todayISO()) return;
+        const t = setTimeout(() => {
+          try {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            a.href = url; a.download = `palanta-auto-${todayISO()}.json`; a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            setSettings({ lastAutoBackup: todayISO() });
+          } catch (e) {}
+        }, 3500);
+        return () => clearTimeout(t);
+      }, []);
+      return null;
+    }
+
     /* ============================ APP ============================ */
     const NAV = [
       { key: 'dashboard', label: 'Kezdő', icon: 'home' },
@@ -3497,6 +3614,8 @@
                 <div><div className="brand-name">Palánta</div><div className="brand-sub">növénynapló</div></div>
               </div>
             </header>
+            <DataGuardBanner />
+            <AutoBackup />
 
             <main className="scroll" ref={scrollRef}>
               <div className="page" key={view + (detail || '')}>{main}</div>
